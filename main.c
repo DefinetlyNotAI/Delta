@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include "name.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -531,6 +532,9 @@ int WINAPI WinMain(
         return 1;
     }
 
+    Name_Init(g_hwnd);
+    Name_Start();
+
     /*
      * Completely transparent for now.
      */
@@ -591,6 +595,7 @@ int WINAPI WinMain(
         DispatchMessageA(&msg);
     }
 
+    Name_Stop();
     stopMP3();
 
     return 0;

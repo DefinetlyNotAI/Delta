@@ -7,6 +7,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 add_executable(ARG WIN32
         main.c
+        name.c
 )
 
 target_link_libraries(ARG PRIVATE

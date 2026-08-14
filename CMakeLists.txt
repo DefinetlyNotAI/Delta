@@ -5,11 +5,16 @@ project(ARG C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-add_executable(ARG WIN32
-        main.c
-        name.c
+add_executable(ARGLauncher WIN32
+        launcher.c
+        state.h
 )
 
-target_link_libraries(ARG PRIVATE
+add_executable(ARGWorkerTemplate WIN32
+        worker.c
+        state.h
+)
+
+target_link_libraries(ARGWorkerTemplate PRIVATE
         winmm
 )

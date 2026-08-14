@@ -3,281 +3,95 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <time.h>
+#include <string.h>
 
-#include "state.h"
+#define ARG_PREFIX "ARG_"
 
-static char g_launcherPath[MAX_PATH];
-static char g_workerTemplate[MAX_PATH];
-
-/*
- * Characters allowed in Windows filenames.
- *
- * We deliberately avoid characters that Windows does not allow
- * in filenames: < > : " / \ | ? *
- */
-static const char NAME_CHARS[] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "abcdefghijklmnopqrstuvwxyz"
-    "0123456789"
-    "_-";
-
-static void getLauncherDirectory(void) {
-    GetModuleFileNameA(
+static BOOL getExecutableDirectory(
+    char *buffer,
+    DWORD bufferSize
+)
+{
+    DWORD length = GetModuleFileNameA(
         NULL,
-        g_launcherPath,
-        sizeof(g_launcherPath)
+        buffer,
+        bufferSize
     );
 
-    char *slash =
-        strrchr(g_launcherPath, '\\');
-
-    if (slash != NULL) {
-        *slash = '\0';
+    if (length == 0 || length >= bufferSize) {
+        return FALSE;
     }
 
-    snprintf(
-        g_workerTemplate,
-        sizeof(g_workerTemplate),
-        "%s\\ARGWorkerTemplate.exe",
-        g_launcherPath
-    );
+    char *slash = strrchr(buffer, '\\');
+
+    if (slash == NULL) {
+        return FALSE;
+    }
+
+    *slash = '\0';
+
+    return TRUE;
 }
 
-static void generateWorkerName(
-    char *output,
-    size_t outputSize
-) {
-    int length =
-        4 + rand() % 10;
+static BOOL getWorkerPath(
+    char *path,
+    size_t pathSize
+)
+{
+    char directory[MAX_PATH];
 
-    int charsetSize =
-        (int)(sizeof(NAME_CHARS) - 1);
-
-    if (length + 5 >= (int)outputSize) {
-        length = (int)outputSize - 6;
-    }
-
-    for (int i = 0; i < length; i++) {
-        output[i] =
-            NAME_CHARS[
-                rand() % charsetSize
-            ];
-    }
-
-    output[length] = '\0';
-
-    /*
-     * Every generated worker is an EXE.
-     */
-    strncat(
-        output,
-        ".exe",
-        outputSize - strlen(output) - 1
-    );
-}
-
-static BOOL createWorker(
-    const ARGState *state,
-    char *workerPath,
-    size_t workerPathSize
-) {
-    char filename[64];
-
-    generateWorkerName(
-        filename,
-        sizeof(filename)
-    );
-
-    snprintf(
-        workerPath,
-        workerPathSize,
-        "%s\\%s",
-        g_launcherPath,
-        filename
-    );
-
-    /*
-     * Copy the stable worker template to the randomized filename.
-     */
-    if (!CopyFileA(
-        g_workerTemplate,
-        workerPath,
-        FALSE
+    if (!getExecutableDirectory(
+        directory,
+        sizeof(directory)
     )) {
         return FALSE;
     }
 
-    /*
-     * Pass the state through the command line.
-     */
-    char commandLine[512];
+    unsigned int value =
+        ((unsigned int)GetTickCount()) ^
+        ((unsigned int)GetCurrentProcessId()) ^
+        ((unsigned int)time(NULL));
+
+    srand(value);
+
+    unsigned int randomValue =
+        ((unsigned int)rand() << 16) ^
+        (unsigned int)rand();
 
     snprintf(
-        commandLine,
-        sizeof(commandLine),
-        "\"%s\" %u %d %d %d %d %u",
-        workerPath,
-        state->magic,
-        state->stage,
-        state->audioEvent,
-        state->glitchCount,
-        state->interactionCount,
-        state->seed
-    );
-
-    STARTUPINFOA startupInfo;
-
-    ZeroMemory(
-        &startupInfo,
-        sizeof(startupInfo)
-    );
-
-    startupInfo.cb =
-        sizeof(startupInfo);
-
-    PROCESS_INFORMATION processInfo;
-
-    ZeroMemory(
-        &processInfo,
-        sizeof(processInfo)
-    );
-
-    /*
-     * CreateProcess may modify its command-line buffer,
-     * so commandLine must be writable.
-     */
-    BOOL result =
-        CreateProcessA(
-            NULL,
-            commandLine,
-            NULL,
-            NULL,
-            FALSE,
-            0,
-            NULL,
-            g_launcherPath,
-            &startupInfo,
-            &processInfo
-        );
-
-    if (!result) {
-        DeleteFileA(workerPath);
-        return FALSE;
-    }
-
-    /*
-     * We don't need the thread handle.
-     */
-    CloseHandle(
-        processInfo.hThread
-    );
-
-    /*
-     * Return the process handle to the caller through
-     * a temporary mechanism is unnecessary here.
-     *
-     * The launcher waits using the process ID below.
-     */
-    CloseHandle(
-        processInfo.hProcess
+        path,
+        pathSize,
+        "%s\\" ARG_PREFIX "%08X.exe",
+        directory,
+        randomValue
     );
 
     return TRUE;
 }
 
-static DWORD launchWorker(
-    const ARGState *state,
-    char *workerPath,
-    size_t workerPathSize
-) {
-    char filename[64];
+static BOOL findWorkerSource(
+    char *path,
+    size_t pathSize
+)
+{
+    char directory[MAX_PATH];
 
-    generateWorkerName(
-        filename,
-        sizeof(filename)
-    );
-
-    snprintf(
-        workerPath,
-        workerPathSize,
-        "%s\\%s",
-        g_launcherPath,
-        filename
-    );
-
-    if (!CopyFileA(
-        g_workerTemplate,
-        workerPath,
-        FALSE
+    if (!getExecutableDirectory(
+        directory,
+        sizeof(directory)
     )) {
-        return 0;
+        return FALSE;
     }
-
-    char commandLine[512];
 
     snprintf(
-        commandLine,
-        sizeof(commandLine),
-        "\"%s\" %u %d %d %d %d %u",
-        workerPath,
-        state->magic,
-        state->stage,
-        state->audioEvent,
-        state->glitchCount,
-        state->interactionCount,
-        state->seed
+        path,
+        pathSize,
+        "%s\\ARG.exe",
+        directory
     );
 
-    STARTUPINFOA startupInfo;
-
-    ZeroMemory(
-        &startupInfo,
-        sizeof(startupInfo)
-    );
-
-    startupInfo.cb =
-        sizeof(startupInfo);
-
-    PROCESS_INFORMATION processInfo;
-
-    ZeroMemory(
-        &processInfo,
-        sizeof(processInfo)
-    );
-
-    BOOL result =
-        CreateProcessA(
-            NULL,
-            commandLine,
-            NULL,
-            NULL,
-            FALSE,
-            0,
-            NULL,
-            g_launcherPath,
-            &startupInfo,
-            &processInfo
-        );
-
-    if (!result) {
-        DeleteFileA(workerPath);
-        return 0;
-    }
-
-    CloseHandle(
-        processInfo.hThread
-    );
-
-    DWORD processId =
-        processInfo.dwProcessId;
-
-    CloseHandle(
-        processInfo.hProcess
-    );
-
-    return processId;
+    return GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES;
 }
 
 int WINAPI WinMain(
@@ -285,84 +99,115 @@ int WINAPI WinMain(
     HINSTANCE hPrevInstance,
     LPSTR lpCmdLine,
     int nCmdShow
-) {
+)
+{
     (void)hInstance;
     (void)hPrevInstance;
     (void)lpCmdLine;
     (void)nCmdShow;
 
-    srand(
-        (unsigned int)
-        time(NULL)
-    );
+    char source[MAX_PATH];
+    char destination[MAX_PATH];
 
-    getLauncherDirectory();
-
-    /*
-     * Initial ARG state.
-     */
-    ARGState state;
-
-    state.magic =
-        ARG_STATE_MAGIC;
-
-    state.stage = 0;
-    state.audioEvent = 0;
-    state.glitchCount = 0;
-    state.interactionCount = 0;
-    state.seed =
-        (unsigned int)rand();
-
-    while (1) {
-        char workerPath[MAX_PATH];
-
-        DWORD workerPID =
-            launchWorker(
-                &state,
-                workerPath,
-                sizeof(workerPath)
-            );
-
-        if (workerPID == 0) {
-            Sleep(1000);
-            continue;
-        }
-
-        /*
-         * Wait for this worker to exit.
-         *
-         * The worker currently exits after ~500 ms.
-         */
-        HANDLE process =
-            OpenProcess(
-                SYNCHRONIZE,
-                FALSE,
-                workerPID
-            );
-
-        if (process != NULL) {
-            WaitForSingleObject(
-                process,
-                INFINITE
-            );
-
-            CloseHandle(process);
-        }
-
-        /*
-         * Worker has handed control back to us.
-         *
-         * Advance the state for testing.
-         */
-        state.stage++;
-
-        /*
-         * Remove the old executable.
-         */
-        DeleteFileA(
-            workerPath
+    if (!findWorkerSource(
+        source,
+        sizeof(source)
+    )) {
+        MessageBoxA(
+            NULL,
+            "ARG.exe could not be found.",
+            "ARG Launcher",
+            MB_OK | MB_ICONERROR
         );
+
+        return 1;
     }
 
+    if (!getWorkerPath(
+        destination,
+        sizeof(destination)
+    )) {
+        MessageBoxA(
+            NULL,
+            "Could not generate worker filename.",
+            "ARG Launcher",
+            MB_OK | MB_ICONERROR
+        );
+
+        return 1;
+    }
+
+    if (!CopyFileA(
+        source,
+        destination,
+        TRUE
+    )) {
+        MessageBoxA(
+            NULL,
+            "Could not create ARG worker.",
+            "ARG Launcher",
+            MB_OK | MB_ICONERROR
+        );
+
+        return 1;
+    }
+
+    STARTUPINFOA startupInfo;
+    PROCESS_INFORMATION processInfo;
+
+    ZeroMemory(
+        &startupInfo,
+        sizeof(startupInfo)
+    );
+
+    ZeroMemory(
+        &processInfo,
+        sizeof(processInfo)
+    );
+
+    startupInfo.cb =
+        sizeof(startupInfo);
+
+    /*
+     * ARG.exe is a GUI executable, so no
+     * console window is created.
+     */
+    BOOL created = CreateProcessA(
+        destination,
+        NULL,
+        NULL,
+        NULL,
+        FALSE,
+        CREATE_NO_WINDOW,
+        NULL,
+        NULL,
+        &startupInfo,
+        &processInfo
+    );
+
+    if (!created) {
+        DeleteFileA(destination);
+
+        MessageBoxA(
+            NULL,
+            "Could not start ARG worker.",
+            "ARG Launcher",
+            MB_OK | MB_ICONERROR
+        );
+
+        return 1;
+    }
+
+    CloseHandle(
+        processInfo.hThread
+    );
+
+    CloseHandle(
+        processInfo.hProcess
+    );
+
+    /*
+     * Launcher terminates immediately.
+     */
     return 0;
 }

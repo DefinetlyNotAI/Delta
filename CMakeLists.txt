@@ -10,14 +10,22 @@ add_executable(ARG WIN32
         state.h
 )
 
-add_executable(ARGLauncher WIN32
-        launcher.c
-)
-
 target_link_libraries(ARG PRIVATE
         winmm
+        ole32
+        sapi
+        crypt32
+        shell32
+        gdiplus
 )
 
-target_link_libraries(ARGLauncher PRIVATE
-        user32
+add_executable(TREE WIN32
+        tree.c
+        tree.rc
+)
+
+target_link_libraries(TREE PRIVATE
+        gdiplus
+        ole32
+        shell32
 )

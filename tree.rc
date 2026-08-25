@@ -1,0 +1,7 @@
+#include <windows.h>
+
+#define TREE_IMAGE_RESOURCE 101
+#define TREE_TEXT_RESOURCE 102
+
+TREE_IMAGE_RESOURCE RCDATA "img\\tree\\tree.jpg"
+TREE_TEXT_RESOURCE RCDATA "text\\tree.txt"

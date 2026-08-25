@@ -29,13 +29,11 @@ static ULONGLONG g_finishAt = 0;
  * This intentionally mirrors the worker's terminal contract. It does not
  * trigger an operating-system crash.
  */
-static void BSOD(void)
-{
+static void BSOD(void) {
     exit(EXIT_SUCCESS);
 }
 
-static BOOL loadResourceBytes(int identifier, BYTE **data, DWORD *length)
-{
+static BOOL loadResourceBytes(int identifier, BYTE **data, DWORD *length) {
     HRSRC resource;
     HGLOBAL loaded;
     void *resourceData;
@@ -70,8 +68,7 @@ static BOOL loadResourceBytes(int identifier, BYTE **data, DWORD *length)
     return TRUE;
 }
 
-static BOOL loadTreeImage(void)
-{
+static BOOL loadTreeImage(void) {
     BYTE *data = NULL;
     DWORD length = 0;
     HGLOBAL memory;
@@ -110,8 +107,7 @@ static BOOL loadTreeImage(void)
     return status == Ok && g_treeImage != NULL;
 }
 
-static BOOL loadTreeStory(void)
-{
+static BOOL loadTreeStory(void) {
     BYTE *data = NULL;
     DWORD length = 0;
 
@@ -119,8 +115,8 @@ static BOOL loadTreeStory(void)
         return FALSE;
     }
 
-    g_story = calloc((size_t)length + 1, 1);
-    g_visibleStory = calloc((size_t)length + 1, 1);
+    g_story = calloc((size_t) length + 1, 1);
+    g_visibleStory = calloc((size_t) length + 1, 1);
 
     if (g_story == NULL || g_visibleStory == NULL) {
         free(data);
@@ -137,10 +133,9 @@ static BOOL loadTreeStory(void)
     return TRUE;
 }
 
-static void releaseTreeResources(void)
-{
+static void releaseTreeResources(void) {
     if (g_treeImage != NULL) {
-        GdipDisposeImage((GpImage *)g_treeImage);
+        GdipDisposeImage((GpImage *) g_treeImage);
         g_treeImage = NULL;
     }
 
@@ -155,21 +150,19 @@ static void releaseTreeResources(void)
     g_visibleStory = NULL;
 }
 
-static BOOL getStartupExecutablePath(char *path, size_t pathSize)
-{
+static BOOL getStartupExecutablePath(char *path, size_t pathSize) {
     char startupPath[MAX_PATH];
 
     if (path == NULL ||
         FAILED(SHGetFolderPathA(NULL, CSIDL_STARTUP, NULL,
-                                SHGFP_TYPE_CURRENT, startupPath))) {
+            SHGFP_TYPE_CURRENT, startupPath))) {
         return FALSE;
     }
 
     return snprintf(path, pathSize, "%s\\tree.exe", startupPath) > 0;
 }
 
-static void queueStartupSelfRemoval(void)
-{
+static void queueStartupSelfRemoval(void) {
     char executablePath[MAX_PATH];
     char startupExecutablePath[MAX_PATH];
     char commandLine[MAX_PATH * 3];
@@ -181,7 +174,6 @@ static void queueStartupSelfRemoval(void)
         !getStartupExecutablePath(startupExecutablePath,
                                   sizeof(startupExecutablePath)) ||
         _stricmp(executablePath, startupExecutablePath) != 0) {
-
         return;
     }
 
@@ -197,14 +189,12 @@ static void queueStartupSelfRemoval(void)
     if (CreateProcessA(NULL, commandLine, NULL, NULL, FALSE,
                        CREATE_NO_WINDOW, NULL, NULL, &startupInfo,
                        &processInfo)) {
-
         CloseHandle(processInfo.hThread);
         CloseHandle(processInfo.hProcess);
     }
 }
 
-static void paintTree(HDC deviceContext, const RECT *clientRect)
-{
+static void paintTree(HDC deviceContext, const RECT *clientRect) {
     RECT textRect;
     UINT imageWidth = 0;
     UINT imageHeight = 0;
@@ -214,17 +204,16 @@ static void paintTree(HDC deviceContext, const RECT *clientRect)
     HFONT font;
     HGDIOBJ oldFont;
 
-    FillRect(deviceContext, clientRect, (HBRUSH)GetStockObject(BLACK_BRUSH));
+    FillRect(deviceContext, clientRect, (HBRUSH) GetStockObject(BLACK_BRUSH));
 
     if (g_treeImage != NULL &&
-        GdipGetImageWidth((GpImage *)g_treeImage, &imageWidth) == Ok &&
-        GdipGetImageHeight((GpImage *)g_treeImage, &imageHeight) == Ok &&
+        GdipGetImageWidth((GpImage *) g_treeImage, &imageWidth) == Ok &&
+        GdipGetImageHeight((GpImage *) g_treeImage, &imageHeight) == Ok &&
         GdipCreateFromHDC(deviceContext, &graphics) == Ok) {
-
-        imageX = (clientRect->right - (int)imageWidth) / 2;
+        imageX = (clientRect->right - (int) imageWidth) / 2;
         imageY = 40;
-        GdipDrawImageRectI(graphics, (GpImage *)g_treeImage, imageX, imageY,
-                           (INT)imageWidth, (INT)imageHeight);
+        GdipDrawImageRectI(graphics, (GpImage *) g_treeImage, imageX, imageY,
+                           (INT) imageWidth, (INT) imageHeight);
         GdipDeleteGraphics(graphics);
     }
 
@@ -246,8 +235,7 @@ static void paintTree(HDC deviceContext, const RECT *clientRect)
 }
 
 static LRESULT CALLBACK TreeWindowProc(HWND hwnd, UINT message,
-                                       WPARAM wParam, LPARAM lParam)
-{
+                                       WPARAM wParam, LPARAM lParam) {
     switch (message) {
         case WM_TIMER:
             if (wParam == TREE_TIMER_ID) {
@@ -295,8 +283,7 @@ static LRESULT CALLBACK TreeWindowProc(HWND hwnd, UINT message,
 }
 
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previousInstance,
-                   LPSTR commandLine, int showCommand)
-{
+                   LPSTR commandLine, int showCommand) {
     WNDCLASSEXA windowClass;
     GdiplusStartupInput startupInput;
     MSG message;
@@ -305,16 +292,15 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previousInstance,
     int width;
     int height;
 
-    (void)previousInstance;
-    (void)commandLine;
-    (void)showCommand;
+    (void) previousInstance;
+    (void) commandLine;
+    (void) showCommand;
 
     ZeroMemory(&startupInput, sizeof(startupInput));
     startupInput.GdiplusVersion = 1;
 
     if (GdiplusStartup(&g_gdiplusToken, &startupInput, NULL) != Ok ||
         !loadTreeImage() || !loadTreeStory()) {
-
         releaseTreeResources();
         return 1;
     }

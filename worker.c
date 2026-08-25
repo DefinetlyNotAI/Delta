@@ -71,7 +71,9 @@ static HRGN g_smileRegion = NULL;
 static HFONT g_smileFont = NULL;
 
 static void appendSessionProcessState(FILE *file);
+
 static void startStaticVisual(DWORD milliseconds);
+
 static void stopStaticVisual(void);
 
 static volatile BOOL
@@ -85,14 +87,13 @@ static char g_basePath[MAX_PATH];
  * ------------------------------------------------------------
  */
 
-static BOOL getBasePath(void)
-{
+static BOOL getBasePath(void) {
     DWORD length =
-        GetModuleFileNameA(
-            NULL,
-            g_basePath,
-            sizeof(g_basePath)
-        );
+            GetModuleFileNameA(
+                NULL,
+                g_basePath,
+                sizeof(g_basePath)
+            );
 
     if (length == 0 ||
         length >= sizeof(g_basePath)) {
@@ -100,10 +101,10 @@ static BOOL getBasePath(void)
     }
 
     char *slash =
-        strrchr(
-            g_basePath,
-            '\\'
-        );
+            strrchr(
+                g_basePath,
+                '\\'
+            );
 
     if (slash == NULL) {
         return FALSE;
@@ -120,8 +121,7 @@ static BOOL getBasePath(void)
  * ------------------------------------------------------------
  */
 
-static void stopMP3(void)
-{
+static void stopMP3(void) {
     mciSendStringA(
         "stop ARG_AUDIO",
         NULL,
@@ -140,8 +140,7 @@ static void stopMP3(void)
 static BOOL playMP3(
     const char *path,
     int volume
-)
-{
+) {
     char command[1024];
 
     stopMP3();
@@ -154,11 +153,11 @@ static BOOL playMP3(
     );
 
     if (mciSendStringA(
-        command,
-        NULL,
-        0,
-        NULL
-    ) != 0) {
+            command,
+            NULL,
+            0,
+            NULL
+        ) != 0) {
         return FALSE;
     }
 
@@ -177,11 +176,11 @@ static BOOL playMP3(
     );
 
     if (mciSendStringA(
-        "play ARG_AUDIO",
-        NULL,
-        0,
-        NULL
-    ) != 0) {
+            "play ARG_AUDIO",
+            NULL,
+            0,
+            NULL
+        ) != 0) {
         stopMP3();
         return FALSE;
     }
@@ -191,8 +190,7 @@ static BOOL playMP3(
 
 static BOOL sleepInterruptible(
     DWORD milliseconds
-)
-{
+) {
     const DWORD interval = 50;
 
     DWORD elapsed = 0;
@@ -203,12 +201,12 @@ static BOOL sleepInterruptible(
         !g_audioThreadStop
     ) {
         DWORD remaining =
-            milliseconds - elapsed;
+                milliseconds - elapsed;
 
         DWORD sleepTime =
-            remaining < interval
-                ? remaining
-                : interval;
+                remaining < interval
+                    ? remaining
+                    : interval;
 
         Sleep(sleepTime);
 
@@ -218,8 +216,7 @@ static BOOL sleepInterruptible(
     return !g_shutdownRequested && !g_audioThreadStop;
 }
 
-static void playStatic(void)
-{
+static void playStatic(void) {
     char path[MAX_PATH * 2];
 
     if (g_audioThreadStop) {
@@ -244,9 +241,9 @@ static void playStatic(void)
      * 0.3 to 1.0 seconds.
      */
     int duration =
-        300 + rand() % 701;
+            300 + rand() % 701;
 
-    startStaticVisual((DWORD)duration);
+    startStaticVisual((DWORD) duration);
     sleepInterruptible(
         duration
     );
@@ -256,8 +253,7 @@ static void playStatic(void)
     }
 }
 
-static void playWhisper(void)
-{
+static void playWhisper(void) {
     char path[MAX_PATH * 2];
 
     if (g_audioThreadStop) {
@@ -297,8 +293,7 @@ static void playWhisper(void)
  * ------------------------------------------------------------
  */
 
-static void generateMachineWhirr(void)
-{
+static void generateMachineWhirr(void) {
     if (g_audioThreadStop) {
         return;
     }
@@ -310,22 +305,22 @@ static void generateMachineWhirr(void)
     const double duration = 2.0;
 
     const int sampleCount =
-        (int)(
-            sampleRate *
-            duration
-        );
+            (int) (
+                sampleRate *
+                duration
+            );
 
     const int dataSize =
-        sampleCount *
-        channels *
-        sizeof(short);
+            sampleCount *
+            channels *
+            sizeof(short);
 
     const int fileSize =
-        44 +
-        dataSize;
+            44 +
+            dataSize;
 
     BYTE *wav =
-        malloc(fileSize);
+            malloc(fileSize);
 
     if (wav == NULL) {
         return;
@@ -342,8 +337,8 @@ static void generateMachineWhirr(void)
         4
     );
 
-    *(DWORD *)(wav + 4) =
-        fileSize - 8;
+    *(DWORD *) (wav + 4) =
+            fileSize - 8;
 
     memcpy(
         wav + 8,
@@ -357,24 +352,24 @@ static void generateMachineWhirr(void)
         4
     );
 
-    *(DWORD *)(wav + 16) = 16;
-    *(WORD *)(wav + 20) = 1;
-    *(WORD *)(wav + 22) = channels;
-    *(DWORD *)(wav + 24) = sampleRate;
+    *(DWORD *) (wav + 16) = 16;
+    *(WORD *) (wav + 20) = 1;
+    *(WORD *) (wav + 22) = channels;
+    *(DWORD *) (wav + 24) = sampleRate;
 
-    *(DWORD *)(wav + 28) =
-        sampleRate *
-        channels *
-        bitsPerSample /
-        8;
+    *(DWORD *) (wav + 28) =
+            sampleRate *
+            channels *
+            bitsPerSample /
+            8;
 
-    *(WORD *)(wav + 32) =
-        channels *
-        bitsPerSample /
-        8;
+    *(WORD *) (wav + 32) =
+            channels *
+            bitsPerSample /
+            8;
 
-    *(WORD *)(wav + 34) =
-        bitsPerSample;
+    *(WORD *) (wav + 34) =
+            bitsPerSample;
 
     memcpy(
         wav + 36,
@@ -382,11 +377,11 @@ static void generateMachineWhirr(void)
         4
     );
 
-    *(DWORD *)(wav + 40) =
-        dataSize;
+    *(DWORD *) (wav + 40) =
+            dataSize;
 
     short *samples =
-        (short *)(wav + 44);
+            (short *) (wav + 44);
 
     double phase1 = 0.0;
     double phase2 = 0.0;
@@ -398,64 +393,64 @@ static void generateMachineWhirr(void)
         i++
     ) {
         double t =
-            (double)i /
-            sampleRate;
+                (double) i /
+                sampleRate;
 
         double freq1 =
-            55.0 +
-            sin(t * 1.7) * 7.0;
+                55.0 +
+                sin(t * 1.7) * 7.0;
 
         double freq2 =
-            110.0 +
-            sin(t * 2.3) * 12.0;
+                110.0 +
+                sin(t * 2.3) * 12.0;
 
         double freq3 =
-            220.0 +
-            sin(t * 3.1) * 18.0;
+                220.0 +
+                sin(t * 3.1) * 18.0;
 
         phase1 +=
-            2.0 *
-            M_PI *
-            freq1 /
-            sampleRate;
+                2.0 *
+                M_PI *
+                freq1 /
+                sampleRate;
 
         phase2 +=
-            2.0 *
-            M_PI *
-            freq2 /
-            sampleRate;
+                2.0 *
+                M_PI *
+                freq2 /
+                sampleRate;
 
         phase3 +=
-            2.0 *
-            M_PI *
-            freq3 /
-            sampleRate;
+                2.0 *
+                M_PI *
+                freq3 /
+                sampleRate;
 
         double signal =
-            sin(phase1) * 0.35 +
-            sin(phase2) * 0.15 +
-            sin(phase3) * 0.06;
+                sin(phase1) * 0.35 +
+                sin(phase2) * 0.15 +
+                sin(phase3) * 0.06;
 
         double noise =
-            ((double)rand() /
-             RAND_MAX) *
-            2.0 -
-            1.0;
+                ((double) rand() /
+                 RAND_MAX) *
+                2.0 -
+                1.0;
 
         signal +=
-            noise * 0.035;
+                noise * 0.035;
 
         double envelope = 1.0;
 
         if (t < 0.15) {
             envelope =
-                t / 0.15;
+                    t / 0.15;
         }
 
         if (t > duration - 0.25) {
             envelope =
-                (duration - t) /
-                0.25;
+                    (duration - t) /
+                    0.25;
         }
 
         signal *= envelope;
@@ -467,14 +462,14 @@ static void generateMachineWhirr(void)
             signal = -1.0;
 
         samples[i] =
-            (short)(
-                signal *
-                32767.0
-            );
+                (short) (
+                    signal *
+                    32767.0
+                );
     }
 
     PlaySoundA(
-        (LPCSTR)wav,
+        (LPCSTR) wav,
         NULL,
         SND_MEMORY |
         SND_ASYNC |
@@ -502,15 +497,13 @@ static void generateMachineWhirr(void)
 
 static DWORD WINAPI audioThread(
     LPVOID parameter
-)
-{
-    (void)parameter;
+) {
+    (void) parameter;
 
     while (!g_shutdownRequested && !g_audioThreadStop) {
-
         int delay =
-            5000 +
-            rand() % 15001;
+                5000 +
+                rand() % 15001;
 
         if (!sleepInterruptible(
             delay
@@ -523,7 +516,6 @@ static DWORD WINAPI audioThread(
         }
 
         switch (rand() % 3) {
-
             case 0:
                 playStatic();
                 break;
@@ -547,8 +539,7 @@ static DWORD WINAPI audioThread(
  * ------------------------------------------------------------
  */
 
-static void releaseTransformScreen(void)
-{
+static void releaseTransformScreen(void) {
     if (g_transformDC != NULL) {
         SelectObject(g_transformDC, g_transformPrevious);
         DeleteDC(g_transformDC);
@@ -562,8 +553,7 @@ static void releaseTransformScreen(void)
     }
 }
 
-static void stopGlitchEffects(void)
-{
+static void stopGlitchEffects(void) {
     g_glitchesEnabled = FALSE;
     g_glitchEndsAt = 0;
     g_glitchStyle = 0;
@@ -584,8 +574,7 @@ static void stopGlitchEffects(void)
     }
 }
 
-static BOOL captureTransformScreen(void)
-{
+static BOOL captureTransformScreen(void) {
     HDC screen;
     int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
     int top = GetSystemMetrics(SM_YVIRTUALSCREEN);
@@ -603,7 +592,7 @@ static BOOL captureTransformScreen(void)
 
     g_transformDC = CreateCompatibleDC(screen);
     g_transformBitmap = CreateCompatibleBitmap(screen, g_transformWidth,
-                                                g_transformHeight);
+                                               g_transformHeight);
     if (g_transformDC == NULL || g_transformBitmap == NULL) {
         ReleaseDC(NULL, screen);
         releaseTransformScreen();
@@ -617,8 +606,7 @@ static BOOL captureTransformScreen(void)
     return TRUE;
 }
 
-static BOOL loadStaticImage(void)
-{
+static BOOL loadStaticImage(void) {
     char imagePath[MAX_PATH * 2];
     wchar_t widePath[MAX_PATH * 2];
     GdiplusStartupInput startupInput;
@@ -642,7 +630,6 @@ static BOOL loadStaticImage(void)
     if (MultiByteToWideChar(CP_ACP, 0, imagePath, -1, widePath,
                             sizeof(widePath) / sizeof(widePath[0])) == 0 ||
         GdipCreateBitmapFromFile(widePath, &g_staticImage) != Ok) {
-
         g_staticImage = NULL;
         return FALSE;
     }
@@ -650,10 +637,9 @@ static BOOL loadStaticImage(void)
     return TRUE;
 }
 
-static void releaseStaticImage(void)
-{
+static void releaseStaticImage(void) {
     if (g_staticImage != NULL) {
-        GdipDisposeImage((GpImage *)g_staticImage);
+        GdipDisposeImage((GpImage *) g_staticImage);
         g_staticImage = NULL;
     }
 
@@ -663,8 +649,7 @@ static void releaseStaticImage(void)
     }
 }
 
-static void startStaticVisual(DWORD milliseconds)
-{
+static void startStaticVisual(DWORD milliseconds) {
     if (g_overlay == NULL || !loadStaticImage()) {
         return;
     }
@@ -675,8 +660,7 @@ static void startStaticVisual(DWORD milliseconds)
     InvalidateRect(g_overlay, NULL, FALSE);
 }
 
-static void stopStaticVisual(void)
-{
+static void stopStaticVisual(void) {
     g_staticVisible = FALSE;
     g_staticEndsAt = 0;
 
@@ -686,32 +670,28 @@ static void stopStaticVisual(void)
     }
 }
 
-static void paintStaticVisual(HDC deviceContext, const RECT *clientRect)
-{
+static void paintStaticVisual(HDC deviceContext, const RECT *clientRect) {
     GpGraphics *graphics = NULL;
 
     if (!g_staticVisible || g_staticImage == NULL ||
         GdipCreateFromHDC(deviceContext, &graphics) != Ok) {
-
         return;
     }
 
-    GdipDrawImageRectI(graphics, (GpImage *)g_staticImage,
+    GdipDrawImageRectI(graphics, (GpImage *) g_staticImage,
                        clientRect->left, clientRect->top,
                        clientRect->right - clientRect->left,
                        clientRect->bottom - clientRect->top);
     GdipDeleteGraphics(graphics);
 }
 
-static void stopStaticOverlay(void)
-{
+static void stopStaticOverlay(void) {
     mciSendStringA("stop ARG_STATIC", NULL, 0, NULL);
     mciSendStringA("close ARG_STATIC", NULL, 0, NULL);
     stopStaticVisual();
 }
 
-static void playStaticOverlayFor(DWORD milliseconds)
-{
+static void playStaticOverlayFor(DWORD milliseconds) {
     char path[MAX_PATH * 2];
     char command[1024];
 
@@ -723,36 +703,33 @@ static void playStaticOverlayFor(DWORD milliseconds)
     if (mciSendStringA(command, NULL, 0, NULL) == 0) {
         snprintf(command, sizeof(command),
                  "play ARG_STATIC from 0 to %lu",
-                 (unsigned long)milliseconds);
+                 (unsigned long) milliseconds);
         mciSendStringA(command, NULL, 0, NULL);
         startStaticVisual(milliseconds);
     }
 }
 
-static void playStaticOverlay(void)
-{
+static void playStaticOverlay(void) {
     playStaticOverlayFor(50);
 }
 
-static BOOL isValidTreeExecutable(const BYTE *data, DWORD length)
-{
+static BOOL isValidTreeExecutable(const BYTE *data, DWORD length) {
     DWORD peOffset;
 
     if (data == NULL || length < 64 || data[0] != 'M' || data[1] != 'Z') {
         return FALSE;
     }
 
-    peOffset = (DWORD)data[60] |
-        ((DWORD)data[61] << 8) |
-        ((DWORD)data[62] << 16) |
-        ((DWORD)data[63] << 24);
+    peOffset = (DWORD) data[60] |
+               ((DWORD) data[61] << 8) |
+               ((DWORD) data[62] << 16) |
+               ((DWORD) data[63] << 24);
 
     return peOffset <= length - 4 &&
-        memcmp(data + peOffset, "PE\0\0", 4) == 0;
+           memcmp(data + peOffset, "PE\0\0", 4) == 0;
 }
 
-static BOOL extractTreeExecutable(void)
-{
+static BOOL extractTreeExecutable(void) {
     char dataPath[MAX_PATH * 2];
     char executablePath[MAX_PATH * 2];
     char temporaryPath[MAX_PATH * 2 + 16];
@@ -776,12 +753,12 @@ static BOOL extractTreeExecutable(void)
         return FALSE;
     }
 
-    char *encoded = calloc((size_t)length + 1, 1);
+    char *encoded = calloc((size_t) length + 1, 1);
     DWORD decodedLength = 0;
 
     if (encoded == NULL ||
-        fread(encoded, 1, (size_t)length, input) != (size_t)length ||
-        !CryptStringToBinaryA(encoded, (DWORD)length,
+        fread(encoded, 1, (size_t) length, input) != (size_t) length ||
+        !CryptStringToBinaryA(encoded, (DWORD) length,
                               CRYPT_STRING_BASE64, NULL,
                               &decodedLength, NULL, NULL)) {
         free(encoded);
@@ -798,7 +775,7 @@ static BOOL extractTreeExecutable(void)
     BYTE *decoded = malloc(decodedLength);
 
     if (decoded == NULL ||
-        !CryptStringToBinaryA(encoded, (DWORD)length,
+        !CryptStringToBinaryA(encoded, (DWORD) length,
                               CRYPT_STRING_BASE64, decoded,
                               &decodedLength, NULL, NULL)) {
         free(decoded);
@@ -831,7 +808,6 @@ static BOOL extractTreeExecutable(void)
     if (fclose(output) != 0 ||
         !MoveFileExA(temporaryPath, executablePath,
                      MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
-
         DeleteFileA(temporaryPath);
         free(decoded);
         free(encoded);
@@ -849,19 +825,17 @@ static BOOL extractTreeExecutable(void)
  * final sequence is being developed: it behaves like the terminal
  * action without forcing an operating-system crash.
  */
-static void BSOD(void)
-{
+static void BSOD(void) {
     exit(EXIT_SUCCESS);
 }
 
-static BOOL installTreeStartup(void)
-{
+static BOOL installTreeStartup(void) {
     char startupPath[MAX_PATH];
     char sourcePath[MAX_PATH * 2];
     char destinationPath[MAX_PATH * 2];
 
     if (FAILED(SHGetFolderPathA(NULL, CSIDL_STARTUP, NULL,
-                                SHGFP_TYPE_CURRENT, startupPath))) {
+        SHGFP_TYPE_CURRENT, startupPath))) {
         return FALSE;
     }
 
@@ -872,14 +846,13 @@ static BOOL installTreeStartup(void)
     return CopyFileA(sourcePath, destinationPath, FALSE);
 }
 
-static void removeInstalledTreeStartup(void)
-{
+static void removeInstalledTreeStartup(void) {
     char startupPath[MAX_PATH];
     char destinationPath[MAX_PATH * 2];
 
     if (!g_treeStartupInstalled ||
         FAILED(SHGetFolderPathA(NULL, CSIDL_STARTUP, NULL,
-                                SHGFP_TYPE_CURRENT, startupPath))) {
+            SHGFP_TYPE_CURRENT, startupPath))) {
         return;
     }
 
@@ -889,8 +862,7 @@ static void removeInstalledTreeStartup(void)
     g_treeStartupInstalled = FALSE;
 }
 
-static void restoreWallpaper(void)
-{
+static void restoreWallpaper(void) {
     if (g_wallpaperChanged && g_originalWallpaperCaptured) {
         SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0,
                               g_originalWallpaper,
@@ -902,8 +874,7 @@ static void restoreWallpaper(void)
     g_originalWallpaper[0] = '\0';
 }
 
-static BOOL setWallpaperFile(const char *relativePath)
-{
+static BOOL setWallpaperFile(const char *relativePath) {
     char path[MAX_PATH * 2];
 
     snprintf(path, sizeof(path), "%s\\%s", g_basePath, relativePath);
@@ -912,7 +883,6 @@ static BOOL setWallpaperFile(const char *relativePath)
         if (!SystemParametersInfoA(SPI_GETDESKWALLPAPER,
                                    sizeof(g_originalWallpaper),
                                    g_originalWallpaper, 0)) {
-
             return FALSE;
         }
 
@@ -928,16 +898,15 @@ static BOOL setWallpaperFile(const char *relativePath)
     return TRUE;
 }
 
-static void startGlitchEffects(void)
-{
+static void startGlitchEffects(void) {
     if (g_overlay == NULL) {
         return;
     }
 
     g_glitchesEnabled = TRUE;
     g_glitchSeed =
-        ((unsigned int)GetTickCount()) ^
-        ((unsigned int)GetCurrentProcessId());
+            ((unsigned int) GetTickCount()) ^
+            ((unsigned int) GetCurrentProcessId());
 
     SetTimer(
         g_overlay,
@@ -947,18 +916,16 @@ static void startGlitchEffects(void)
     );
 }
 
-static unsigned int nextGlitchRandom(void)
-{
+static unsigned int nextGlitchRandom(void) {
     g_glitchSeed =
-        g_glitchSeed * 1664525u + 1013904223u;
+            g_glitchSeed * 1664525u + 1013904223u;
 
     return g_glitchSeed;
 }
 
 static void writeSessionMemory(
     const char *status
-)
-{
+) {
     char path[MAX_PATH * 2];
     FILE *file;
 
@@ -988,14 +955,12 @@ static LRESULT CALLBACK mouseHookProc(
     int code,
     WPARAM message,
     LPARAM parameter
-)
-{
+) {
     if (code == HC_ACTION &&
         message == WM_MOUSEMOVE &&
         g_mouseInversionActive) {
-
         MSLLHOOKSTRUCT *mouse =
-            (MSLLHOOKSTRUCT *)parameter;
+                (MSLLHOOKSTRUCT *) parameter;
 
         if (g_ignoreMouseMove) {
             g_ignoreMouseMove = FALSE;
@@ -1041,8 +1006,7 @@ static LRESULT CALLBACK mouseHookProc(
     );
 }
 
-static void stopMouseInversion(void)
-{
+static void stopMouseInversion(void) {
     g_mouseInversionActive = FALSE;
     g_mouseInversionEndsAt = 0;
     g_ignoreMouseMove = FALSE;
@@ -1057,11 +1021,9 @@ static void stopMouseInversion(void)
 
 static void startMouseInversion(
     DWORD duration
-)
-{
+) {
     if (!g_mouseInversionAllowed ||
         g_mouseInversionActive) {
-
         return;
     }
 
@@ -1086,13 +1048,11 @@ static LRESULT CALLBACK keyboardHookProc(
     int code,
     WPARAM message,
     LPARAM parameter
-)
-{
+) {
     if (code == HC_ACTION && g_keyboardBlockActive &&
         (message == WM_KEYDOWN || message == WM_SYSKEYDOWN ||
          message == WM_KEYUP || message == WM_SYSKEYUP)) {
-
-        KBDLLHOOKSTRUCT *keyboard = (KBDLLHOOKSTRUCT *)parameter;
+        KBDLLHOOKSTRUCT *keyboard = (KBDLLHOOKSTRUCT *) parameter;
 
         if (keyboard->vkCode != VK_F10) {
             return 1;
@@ -1102,8 +1062,7 @@ static LRESULT CALLBACK keyboardHookProc(
     return CallNextHookEx(g_keyboardHook, code, message, parameter);
 }
 
-static void stopKeyboardBlock(void)
-{
+static void stopKeyboardBlock(void) {
     g_keyboardBlockActive = FALSE;
     g_keyboardBlockEndsAt = 0;
 
@@ -1115,8 +1074,7 @@ static void stopKeyboardBlock(void)
     writeSessionMemory("active");
 }
 
-static void startKeyboardBlock(DWORD duration)
-{
+static void startKeyboardBlock(DWORD duration) {
     if (!g_keyboardBlockAllowed || g_keyboardBlockActive) {
         return;
     }
@@ -1132,26 +1090,22 @@ static void startKeyboardBlock(DWORD duration)
     writeSessionMemory("active");
 }
 
-static void updateKeyboardBlock(DWORD now)
-{
+static void updateKeyboardBlock(DWORD now) {
     if (!g_keyboardBlockAllowed) {
         return;
     }
 
     if (g_keyboardBlockActive &&
-        (LONG)(now - g_keyboardBlockEndsAt) >= 0) {
-
+        (LONG) (now - g_keyboardBlockEndsAt) >= 0) {
         stopKeyboardBlock();
         g_nextKeyboardBlockAt = now + 4000 + nextGlitchRandom() % 10001;
     } else if (!g_keyboardBlockActive &&
-               (LONG)(now - g_nextKeyboardBlockAt) >= 0) {
-
+               (LONG) (now - g_nextKeyboardBlockAt) >= 0) {
         startKeyboardBlock(900 + nextGlitchRandom() % 2101);
     }
 }
 
-static BOOL acceptTerms(void)
-{
+static BOOL acceptTerms(void) {
     int accepted = MessageBoxA(
         NULL,
         "This is a psych-horror ARG puzzle. It can show flashing "
@@ -1185,41 +1139,41 @@ static BOOL acceptTerms(void)
     g_mouseInversionAllowed = mouseChoice == IDYES;
 
     g_keyboardBlockAllowed = MessageBoxA(
-        NULL,
-        "Enable temporary keyboard blocking during Steps 4 and 5? "
-        "Each interval is brief, and F10 always remains available to stop "
-        "and clean up immediately.",
-        "ARG optional keyboard effect",
-        MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2
-    ) == IDYES;
+                                 NULL,
+                                 "Enable temporary keyboard blocking during Steps 4 and 5? "
+                                 "Each interval is brief, and F10 always remains available to stop "
+                                 "and clean up immediately.",
+                                 "ARG optional keyboard effect",
+                                 MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2
+                             ) == IDYES;
 
     g_appLaunchAllowed = MessageBoxA(
-        NULL,
-        "Allow Step 5 to open and temporarily resize only applications "
-        "created by ARG (Calculator, Paint, Notepad, or CMD)? F10 closes "
-        "only ARG-created applications.",
-        "ARG optional application effect",
-        MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2
-    ) == IDYES;
+                             NULL,
+                             "Allow Step 5 to open and temporarily resize only applications "
+                             "created by ARG (Calculator, Paint, Notepad, or CMD)? F10 closes "
+                             "only ARG-created applications.",
+                             "ARG optional application effect",
+                             MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2
+                         ) == IDYES;
 
     g_browserAllowed = g_appLaunchAllowed &&
-        MessageBoxA(
-            NULL,
-            "Allow ARG to launch Microsoft Edge in InPrivate mode with "
-            "an empty about:blank tab during Step 5?",
-            "ARG optional browser effect",
-            MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2
-        ) == IDYES;
+                       MessageBoxA(
+                           NULL,
+                           "Allow ARG to launch Microsoft Edge in InPrivate mode with "
+                           "an empty about:blank tab during Step 5?",
+                           "ARG optional browser effect",
+                           MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2
+                       ) == IDYES;
 
     g_localInfoAllowed = g_appLaunchAllowed &&
-        MessageBoxA(
-            NULL,
-            "Allow ARG to show only local, non-changing command output: "
-            "whoami, hostname, IPv4 addresses, and MAC addresses? "
-            "Nothing is sent anywhere.",
-            "ARG optional local information",
-            MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2
-        ) == IDYES;
+                         MessageBoxA(
+                             NULL,
+                             "Allow ARG to show only local, non-changing command output: "
+                             "whoami, hostname, IPv4 addresses, and MAC addresses? "
+                             "Nothing is sent anywhere.",
+                             "ARG optional local information",
+                             MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2
+                         ) == IDYES;
 
     return TRUE;
 }
@@ -1296,8 +1250,7 @@ static const char *g_step7RegularWallpapers[] = {
     "img\\creep\\white.png"
 };
 
-static void appendSessionProcessState(FILE *file)
-{
+static void appendSessionProcessState(FILE *file) {
     fprintf(file, "text_process_count=%d\n",
             g_textProcessCount);
     fprintf(file, "tts_started=%d\n",
@@ -1306,19 +1259,17 @@ static void appendSessionProcessState(FILE *file)
     for (int index = 0;
          index < g_textProcessCount;
          index++) {
-
         fprintf(file, "text_process_pid_%d=%lu\n",
                 index,
-                (unsigned long)g_textProcesses[index].processId);
+                (unsigned long) g_textProcesses[index].processId);
     }
 }
 
 static BOOL CALLBACK findWindowForProcess(
     HWND hwnd,
     LPARAM parameter
-)
-{
-    TextProcess *textProcess = (TextProcess *)parameter;
+) {
+    TextProcess *textProcess = (TextProcess *) parameter;
     DWORD processId = 0;
 
     GetWindowThreadProcessId(
@@ -1328,7 +1279,6 @@ static BOOL CALLBACK findWindowForProcess(
 
     if (processId == textProcess->processId &&
         IsWindowVisible(hwnd)) {
-
         textProcess->window = hwnd;
         return FALSE;
     }
@@ -1338,8 +1288,7 @@ static BOOL CALLBACK findWindowForProcess(
 
 static void closeTextProcess(
     TextProcess *textProcess
-)
-{
+) {
     if (textProcess->process == NULL) {
         return;
     }
@@ -1352,9 +1301,9 @@ static void closeTextProcess(
                 textProcess->originalRect.left,
                 textProcess->originalRect.top,
                 textProcess->originalRect.right -
-                    textProcess->originalRect.left,
+                textProcess->originalRect.left,
                 textProcess->originalRect.bottom -
-                    textProcess->originalRect.top,
+                textProcess->originalRect.top,
                 SWP_NOZORDER | SWP_NOACTIVATE
             );
         }
@@ -1368,10 +1317,9 @@ static void closeTextProcess(
     }
 
     if (WaitForSingleObject(
-        textProcess->process,
-        250
-    ) == WAIT_TIMEOUT) {
-
+            textProcess->process,
+            250
+        ) == WAIT_TIMEOUT) {
         TerminateProcess(
             textProcess->process,
             0
@@ -1382,24 +1330,21 @@ static void closeTextProcess(
     ZeroMemory(textProcess, sizeof(*textProcess));
 }
 
-static void reapTextProcesses(void)
-{
+static void reapTextProcesses(void) {
     DWORD now = GetTickCount();
 
     for (int index = g_textProcessCount - 1;
          index >= 0;
          index--) {
-
         TextProcess *textProcess =
-            &g_textProcesses[index];
+                &g_textProcesses[index];
 
         if (WaitForSingleObject(
-            textProcess->process,
-            0
-        ) == WAIT_OBJECT_0 ||
+                textProcess->process,
+                0
+            ) == WAIT_OBJECT_0 ||
             (textProcess->closeAt != 0 &&
-             (LONG)(now - textProcess->closeAt) >= 0)) {
-
+             (LONG) (now - textProcess->closeAt) >= 0)) {
             closeTextProcess(textProcess);
 
             if (index < g_textProcessCount - 1) {
@@ -1417,8 +1362,7 @@ static void reapTextProcesses(void)
     }
 }
 
-static void closeAllTextProcesses(void)
-{
+static void closeAllTextProcesses(void) {
     while (g_textProcessCount > 0) {
         closeTextProcess(&g_textProcesses[
             g_textProcessCount - 1
@@ -1432,8 +1376,7 @@ static void appendCharacter(
     size_t bufferSize,
     size_t *position,
     wchar_t character
-)
-{
+) {
     if (*position + 1 >= bufferSize) {
         return;
     }
@@ -1447,12 +1390,11 @@ static void createGarbageText(
     wchar_t *buffer,
     size_t bufferSize,
     TextHost host
-)
-{
+) {
     static const wchar_t characters[] =
-        L"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        L"abcdefghijklmnopqrstuvwxyz"
-        L"0123456789<>[]{}!@%^*_-+=|/\\";
+            L"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            L"abcdefghijklmnopqrstuvwxyz"
+            L"0123456789<>[]{}!@%^*_-+=|/\\";
     static const wchar_t symbols[] = {
         0x2591, 0x2592, 0x2593, 0x25A0, 0x25C6
     };
@@ -1466,7 +1408,6 @@ static void createGarbageText(
         for (size_t index = 0;
              prefix[index] != L'\0';
              index++) {
-
             appendCharacter(
                 buffer,
                 bufferSize,
@@ -1483,7 +1424,6 @@ static void createGarbageText(
 
         if (host == TEXT_HOST_NOTEPAD &&
             (nextGlitchRandom() % 7) == 0) {
-
             character = symbols[
                 nextGlitchRandom() %
                 (sizeof(symbols) / sizeof(symbols[0]))
@@ -1510,16 +1450,14 @@ static void createGarbageText(
 static BOOL startTextProcess(
     TextHost host,
     const wchar_t *text
-)
-{
+) {
     if (g_textProcessCount >= ARG_MAX_TEXT_PROCESSES ||
         text == NULL) {
-
         return FALSE;
     }
 
     TextProcess *textProcess =
-        &g_textProcesses[g_textProcessCount];
+            &g_textProcesses[g_textProcessCount];
     STARTUPINFOW startupInfo;
     PROCESS_INFORMATION processInfo;
     wchar_t commandLine[256];
@@ -1535,7 +1473,7 @@ static BOOL startTextProcess(
             commandLine,
             sizeof(commandLine) / sizeof(commandLine[0]),
             L"cmd.exe /k title ARG_TEXT_%lu",
-            (unsigned long)GetCurrentProcessId()
+            (unsigned long) GetCurrentProcessId()
         );
     } else {
         wcscpy(commandLine, L"notepad.exe");
@@ -1553,7 +1491,6 @@ static BOOL startTextProcess(
         &startupInfo,
         &processInfo
     )) {
-
         MessageBoxA(
             NULL,
             "Could not create an ARG text display.",
@@ -1586,16 +1523,14 @@ static BOOL startTextProcess(
 static BOOL startApplicationProcess(
     const wchar_t *commandLine,
     DWORD duration
-)
-{
+) {
     if (g_textProcessCount >= ARG_MAX_TEXT_PROCESSES ||
         commandLine == NULL) {
-
         return FALSE;
     }
 
     TextProcess *textProcess =
-        &g_textProcesses[g_textProcessCount];
+            &g_textProcesses[g_textProcessCount];
     STARTUPINFOW startupInfo;
     PROCESS_INFORMATION processInfo;
     wchar_t mutableCommandLine[512];
@@ -1628,7 +1563,6 @@ static BOOL startApplicationProcess(
         &startupInfo,
         &processInfo
     )) {
-
         return FALSE;
     }
 
@@ -1648,11 +1582,9 @@ static BOOL startApplicationProcess(
 static void applySplitGeometry(
     TextProcess *textProcess,
     int side
-)
-{
+) {
     if (textProcess->window == NULL ||
         textProcess->geometryCaptured) {
-
         return;
     }
 
@@ -1660,7 +1592,6 @@ static void applySplitGeometry(
         textProcess->window,
         &textProcess->originalRect
     )) {
-
         return;
     }
 
@@ -1682,8 +1613,7 @@ static void applySplitGeometry(
     textProcess->geometryCaptured = TRUE;
 }
 
-static void updateTextProcesses(void)
-{
+static void updateTextProcesses(void) {
     DWORD now = GetTickCount();
 
     reapTextProcesses();
@@ -1691,26 +1621,24 @@ static void updateTextProcesses(void)
     for (int index = 0;
          index < g_textProcessCount;
          index++) {
-
         TextProcess *textProcess =
-            &g_textProcesses[index];
+                &g_textProcesses[index];
 
         if (textProcess->window == NULL) {
             EnumWindows(
                 findWindowForProcess,
-                (LPARAM)textProcess
+                (LPARAM) textProcess
             );
 
             if (textProcess->window == NULL &&
                 textProcess->host == TEXT_HOST_CMD) {
-
                 wchar_t title[64];
 
                 swprintf(
                     title,
                     sizeof(title) / sizeof(title[0]),
                     L"ARG_TEXT_%lu",
-                    (unsigned long)GetCurrentProcessId()
+                    (unsigned long) GetCurrentProcessId()
                 );
 
                 textProcess->window = FindWindowW(NULL, title);
@@ -1719,8 +1647,7 @@ static void updateTextProcesses(void)
 
         if (textProcess->window == NULL &&
             !textProcess->errorReported &&
-            (LONG)(now - textProcess->startedAt) >= 5000) {
-
+            (LONG) (now - textProcess->startedAt) >= 5000) {
             textProcess->errorReported = TRUE;
             textProcess->closeAt = now;
 
@@ -1734,7 +1661,6 @@ static void updateTextProcesses(void)
 
         if (g_splitOverlayActive &&
             textProcess->window != NULL) {
-
             applySplitGeometry(
                 textProcess,
                 index % 2
@@ -1742,15 +1668,14 @@ static void updateTextProcesses(void)
         }
 
         if (textProcess->window == NULL ||
-            (LONG)(now - textProcess->nextCharacterAt) < 0 ||
+            (LONG) (now - textProcess->nextCharacterAt) < 0 ||
             textProcess->closeAt != 0 ||
             !textProcess->autoType) {
-
             continue;
         }
 
         wchar_t character =
-            textProcess->text[textProcess->position];
+                textProcess->text[textProcess->position];
 
         if (character == L'\0') {
             textProcess->closeAt = now + 3000;
@@ -1784,17 +1709,15 @@ static void updateTextProcesses(void)
         }
 
         textProcess->nextCharacterAt =
-            now + 45 + nextGlitchRandom() % 96;
+                now + 45 + nextGlitchRandom() % 96;
     }
 }
 
-static DWORD step7RandomWallpaperDelay(void)
-{
+static DWORD step7RandomWallpaperDelay(void) {
     return 2000 + nextGlitchRandom() % 2001;
 }
 
-static void step7ShowWallpaperFrame(void)
-{
+static void step7ShowWallpaperFrame(void) {
     char relativePath[64];
 
     switch (g_step7.wallpaperMode) {
@@ -1824,15 +1747,13 @@ static void step7ShowWallpaperFrame(void)
     playStaticOverlay();
 }
 
-static void step7StartWallpaperEvent(ULONGLONG now)
-{
+static void step7StartWallpaperEvent(ULONGLONG now) {
     size_t choice = nextGlitchRandom() %
-        (sizeof(g_step7RegularWallpapers) /
-         sizeof(g_step7RegularWallpapers[0]) + 3);
+                    (sizeof(g_step7RegularWallpapers) /
+                     sizeof(g_step7RegularWallpapers[0]) + 3);
 
     if (choice < sizeof(g_step7RegularWallpapers) /
-                 sizeof(g_step7RegularWallpapers[0])) {
-
+        sizeof(g_step7RegularWallpapers[0])) {
         setWallpaperFile(g_step7RegularWallpapers[choice]);
         playStaticOverlay();
         g_step7.nextWallpaperAt = now + step7RandomWallpaperDelay();
@@ -1842,14 +1763,12 @@ static void step7StartWallpaperEvent(ULONGLONG now)
     g_step7.wallpaperFrame = 0;
 
     if (choice == sizeof(g_step7RegularWallpapers) /
-                  sizeof(g_step7RegularWallpapers[0])) {
-
+        sizeof(g_step7RegularWallpapers[0])) {
         g_step7.wallpaperMode = STEP7_WALLPAPER_HAPPY;
         g_step7.wallpaperFrameCount = 27;
         g_step7.wallpaperFrameInterval = 100;
     } else if (choice == sizeof(g_step7RegularWallpapers) /
-                         sizeof(g_step7RegularWallpapers[0]) + 1) {
-
+               sizeof(g_step7RegularWallpapers[0]) + 1) {
         g_step7.wallpaperMode = STEP7_WALLPAPER_HT;
         g_step7.wallpaperFrameCount = 4;
         g_step7.wallpaperFrameInterval = 500;
@@ -1863,8 +1782,7 @@ static void step7StartWallpaperEvent(ULONGLONG now)
     g_step7.nextWallpaperAt = now + g_step7.wallpaperFrameInterval;
 }
 
-static void updateStep7Wallpapers(ULONGLONG now)
-{
+static void updateStep7Wallpapers(ULONGLONG now) {
     if (now < g_step7.nextWallpaperAt) {
         return;
     }
@@ -1890,8 +1808,7 @@ static void updateStep7Wallpapers(ULONGLONG now)
     }
 }
 
-static BOOL step7ReminderIsOpen(void)
-{
+static BOOL step7ReminderIsOpen(void) {
     static const wchar_t reminder[] = L"Remember to smile :)\r\n";
 
     for (int index = 0; index < g_textProcessCount; index++) {
@@ -1903,8 +1820,7 @@ static BOOL step7ReminderIsOpen(void)
     return FALSE;
 }
 
-static void updateStep7Reminder(ULONGLONG now)
-{
+static void updateStep7Reminder(ULONGLONG now) {
     if (g_step7.reminderActive) {
         if (!step7ReminderIsOpen()) {
             g_step7.reminderActive = FALSE;
@@ -1915,28 +1831,24 @@ static void updateStep7Reminder(ULONGLONG now)
 
     if (now >= g_step7.nextReminderAt &&
         startTextProcess(TEXT_HOST_NOTEPAD, L"Remember to smile :)\r\n")) {
-
         g_step7.reminderActive = TRUE;
     }
 }
 
-static void startStep7(ULONGLONG now)
-{
+static void startStep7(ULONGLONG now) {
     ZeroMemory(&g_step7, sizeof(g_step7));
     g_step7.nextWallpaperAt = now;
     g_step7.nextReminderAt = now;
 }
 
-static void startStep7Countdown(ULONGLONG now)
-{
+static void startStep7Countdown(ULONGLONG now) {
     g_step7.countdown = 5;
     g_step7.nextCountdownAt = now + 1000;
     setWallpaperFile("img\\countdown\\5.png");
     playStaticOverlayFor(100);
 }
 
-static BOOL updateStep7Countdown(ULONGLONG now)
-{
+static BOOL updateStep7Countdown(ULONGLONG now) {
     char relativePath[64];
 
     if (now < g_step7.nextCountdownAt) {
@@ -1961,8 +1873,7 @@ static BOOL updateStep7Countdown(ULONGLONG now)
     return FALSE;
 }
 
-static BOOL loadPoems(void)
-{
+static BOOL loadPoems(void) {
     char path[MAX_PATH * 2];
     FILE *file;
     char line[512];
@@ -1987,10 +1898,8 @@ static BOOL loadPoems(void)
     while (fgets(line, sizeof(line), file) != NULL) {
         if (strcmp(line, "\n") == 0 ||
             strcmp(line, "\r\n") == 0) {
-
             if (position > 0 &&
                 g_poemCount + 1 < ARG_MAX_POEMS) {
-
                 g_poems[g_poemCount][position] = '\0';
                 g_poemCount++;
                 position = 0;
@@ -2022,8 +1931,7 @@ static BOOL loadPoems(void)
     return g_poemCount >= ARG_RESERVED_POEMS;
 }
 
-static void reservePoems(void)
-{
+static void reservePoems(void) {
     int order[ARG_MAX_POEMS];
 
     for (int index = 0; index < g_poemCount; index++) {
@@ -2041,7 +1949,6 @@ static void reservePoems(void)
     for (int index = 0;
          index < ARG_RESERVED_POEMS;
          index++) {
-
         g_reservedPoems[index] = order[index];
         g_ttsPoems[index] = order[
             index + ARG_RESERVED_POEMS
@@ -2051,9 +1958,8 @@ static void reservePoems(void)
 
 static DWORD WINAPI ttsThread(
     LPVOID parameter
-)
-{
-    (void)parameter;
+) {
+    (void) parameter;
 
     if (FAILED(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED))) {
         g_ttsComplete = TRUE;
@@ -2069,7 +1975,6 @@ static DWORD WINAPI ttsThread(
         &IID_ISpVoice,
         (void **)&voice
     ))) {
-
         CoUninitialize();
         g_ttsComplete = TRUE;
         return 0;
@@ -2083,7 +1988,6 @@ static DWORD WINAPI ttsThread(
          index < ARG_RESERVED_POEMS &&
          !g_shutdownRequested;
          index++) {
-
         const char *poem = g_poems[g_ttsPoems[index]];
         int length = MultiByteToWideChar(
             CP_UTF8,
@@ -2099,7 +2003,7 @@ static DWORD WINAPI ttsThread(
         }
 
         wchar_t *widePoem = calloc(
-            (size_t)length,
+            (size_t) length,
             sizeof(*widePoem)
         );
 
@@ -2144,8 +2048,7 @@ static DWORD WINAPI ttsThread(
     return 0;
 }
 
-static void startTts(void)
-{
+static void startTts(void) {
     if (g_ttsStarted) {
         return;
     }
@@ -2169,8 +2072,7 @@ static void startTts(void)
     }
 }
 
-static void stopTts(void)
-{
+static void stopTts(void) {
     EnterCriticalSection(&g_ttsLock);
 
     if (g_ttsVoice != NULL) {
@@ -2187,9 +2089,8 @@ static void stopTts(void)
 
 static DWORD WINAPI step6SpeechThread(
     LPVOID parameter
-)
-{
-    (void)parameter;
+) {
+    (void) parameter;
 
     if (FAILED(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED))) {
         MessageBoxA(NULL, "You can't smile there, try again.",
@@ -2200,13 +2101,13 @@ static DWORD WINAPI step6SpeechThread(
     ISpVoice *voice = NULL;
 
     if (FAILED(CoCreateInstance(&CLSID_SpVoice, NULL, CLSCTX_ALL,
-                                &IID_ISpVoice, (void **)&voice))) {
+        &IID_ISpVoice, (void **)&voice))) {
         MessageBoxA(NULL, "You can't smile there, try again.",
                     "ARG information", MB_OK | MB_ICONINFORMATION);
     } else {
         voice->lpVtbl->Speak(voice,
-                              L"You can't smile there, try again.",
-                              SPF_DEFAULT, NULL);
+                             L"You can't smile there, try again.",
+                             SPF_DEFAULT, NULL);
         voice->lpVtbl->Release(voice);
     }
 
@@ -2214,8 +2115,7 @@ static DWORD WINAPI step6SpeechThread(
     return 0;
 }
 
-static void sayStep6Warning(void)
-{
+static void sayStep6Warning(void) {
     HANDLE thread = CreateThread(NULL, 0, step6SpeechThread,
                                  NULL, 0, NULL);
 
@@ -2224,29 +2124,27 @@ static void sayStep6Warning(void)
     }
 }
 
-static void startRandomTextWindow(void)
-{
+static void startRandomTextWindow(void) {
     wchar_t text[ARG_TEXT_BUFFER_SIZE];
     TextHost host =
-        (nextGlitchRandom() % 2) == 0
-            ? TEXT_HOST_CMD
-            : TEXT_HOST_NOTEPAD;
+            (nextGlitchRandom() % 2) == 0
+                ? TEXT_HOST_CMD
+                : TEXT_HOST_NOTEPAD;
 
     createGarbageText(text, sizeof(text) / sizeof(text[0]), host);
     startTextProcess(host, text);
 }
 
-static void startPoemWindow(void)
-{
+static void startPoemWindow(void) {
     if (g_nextPoem >= ARG_RESERVED_POEMS) {
         return;
     }
 
     wchar_t text[ARG_TEXT_BUFFER_SIZE];
     TextHost host =
-        (nextGlitchRandom() % 2) == 0
-            ? TEXT_HOST_CMD
-            : TEXT_HOST_NOTEPAD;
+            (nextGlitchRandom() % 2) == 0
+                ? TEXT_HOST_CMD
+                : TEXT_HOST_NOTEPAD;
     const char *poem = g_poems[
         g_reservedPoems[g_nextPoem]
     ];
@@ -2258,10 +2156,8 @@ static void startPoemWindow(void)
          poem[index] != '\0' &&
          position + 5 < ARG_TEXT_BUFFER_SIZE;
          index++) {
-
         if ((index == 0 || poem[index - 1] == '\n') &&
             host == TEXT_HOST_CMD) {
-
             appendCharacter(text, ARG_TEXT_BUFFER_SIZE, &position, L'R');
             appendCharacter(text, ARG_TEXT_BUFFER_SIZE, &position, L'E');
             appendCharacter(text, ARG_TEXT_BUFFER_SIZE, &position, L'M');
@@ -2272,7 +2168,7 @@ static void startPoemWindow(void)
             text,
             ARG_TEXT_BUFFER_SIZE,
             &position,
-            (unsigned char)poem[index]
+            (unsigned char) poem[index]
         );
     }
 
@@ -2283,11 +2179,9 @@ static void startPoemWindow(void)
 
 static void startStep5Window(
     DWORD duration
-)
-{
+) {
     if (!g_appLaunchAllowed ||
         g_textProcessCount >= ARG_MAX_TEXT_PROCESSES) {
-
         return;
     }
 
@@ -2297,16 +2191,15 @@ static void startStep5Window(
         L"notepad.exe"
     };
     unsigned int choice = nextGlitchRandom() %
-        (sizeof(applications) / sizeof(applications[0]) +
-         (g_browserAllowed ? 1 : 0) +
-         (g_localInfoAllowed ? 1 : 0));
+                          (sizeof(applications) / sizeof(applications[0]) +
+                           (g_browserAllowed ? 1 : 0) +
+                           (g_localInfoAllowed ? 1 : 0));
 
     if (choice < sizeof(applications) / sizeof(applications[0])) {
         startApplicationProcess(applications[choice], duration);
     } else if (g_browserAllowed &&
                choice == sizeof(applications) /
-                         sizeof(applications[0])) {
-
+               sizeof(applications[0])) {
         startApplicationProcess(
             L"msedge.exe --inprivate about:blank",
             duration
@@ -2319,14 +2212,13 @@ static void startStep5Window(
             L"getmac /FO LIST /NH\r\n"
         };
         size_t command = nextGlitchRandom() %
-            (sizeof(commands) / sizeof(commands[0]));
+                         (sizeof(commands) / sizeof(commands[0]));
 
         startTextProcess(TEXT_HOST_CMD, commands[command]);
     }
 }
 
-static void startSplitOverlay(void)
-{
+static void startSplitOverlay(void) {
     g_splitOverlayActive = TRUE;
 
     SetLayeredWindowAttributes(
@@ -2339,8 +2231,7 @@ static void startSplitOverlay(void)
     InvalidateRect(g_overlay, NULL, FALSE);
 }
 
-static void stopSplitOverlay(void)
-{
+static void stopSplitOverlay(void) {
     g_splitOverlayActive = FALSE;
 
     if (g_glitchStyle == 0 && g_overlay != NULL) {
@@ -2353,8 +2244,7 @@ static void stopSplitOverlay(void)
     }
 }
 
-static void stopStep6(void)
-{
+static void stopStep6(void) {
     g_step6Active = FALSE;
 
     if (g_smileRegion != NULL) {
@@ -2377,8 +2267,7 @@ static void stopStep6(void)
     }
 }
 
-static void startStep6(void)
-{
+static void startStep6(void) {
     int width = GetSystemMetrics(SM_CXSCREEN);
     int height = GetSystemMetrics(SM_CYSCREEN);
     HDC screen = GetDC(NULL);
@@ -2452,8 +2341,7 @@ static void startStep6(void)
 static void paintGlitch(
     HDC deviceContext,
     const RECT *clientRect
-)
-{
+) {
     if (g_staticVisible) {
         paintStaticVisual(deviceContext, clientRect);
         return;
@@ -2548,9 +2436,9 @@ static void paintGlitch(
         block.left = nextGlitchRandom() % width;
         block.top = nextGlitchRandom() % height;
         block.right = block.left +
-            30 + nextGlitchRandom() % 220;
+                      30 + nextGlitchRandom() % 220;
         block.bottom = block.top +
-            12 + nextGlitchRandom() % 100;
+                       12 + nextGlitchRandom() % 100;
 
         if (block.right > width) {
             block.right = width;
@@ -2595,24 +2483,24 @@ static LRESULT CALLBACK WindowProc(
     UINT message,
     WPARAM wParam,
     LPARAM lParam
-)
-{
+) {
     switch (message) {
-
         case WM_NCHITTEST:
             if (g_step6Active) {
                 POINT point = {
-                    (short)LOWORD(lParam),
-                    (short)HIWORD(lParam)
+                    (short) LOWORD(lParam),
+                    (short) HIWORD(lParam)
                 };
 
                 ScreenToClient(hwnd, &point);
 
                 return PtInRegion(
-                    g_smileRegion,
-                    point.x,
-                    point.y
-                ) ? HTTRANSPARENT : HTCLIENT;
+                           g_smileRegion,
+                           point.x,
+                           point.y
+                       )
+                           ? HTTRANSPARENT
+                           : HTCLIENT;
             }
 
             return HTTRANSPARENT;
@@ -2645,10 +2533,10 @@ static LRESULT CALLBACK WindowProc(
             if (wParam == ARG_STATIC_TIMER_ID && g_staticVisible) {
                 DWORD now = GetTickCount();
 
-                if ((LONG)(now - g_staticEndsAt) >= 0) {
+                if ((LONG) (now - g_staticEndsAt) >= 0) {
                     stopStaticVisual();
                 } else if (g_staticImage != NULL) {
-                    GdipImageRotateFlip((GpImage *)g_staticImage,
+                    GdipImageRotateFlip((GpImage *) g_staticImage,
                                         Rotate180FlipNone);
                     InvalidateRect(hwnd, NULL, FALSE);
                 }
@@ -2659,12 +2547,10 @@ static LRESULT CALLBACK WindowProc(
             if (wParam == ARG_GLITCH_TIMER_ID &&
                 g_glitchesEnabled &&
                 !g_shutdownRequested) {
-
                 DWORD now = GetTickCount();
 
                 if (g_glitchStyle != 0 &&
-                    (LONG)(now - g_glitchEndsAt) >= 0) {
-
+                    (LONG) (now - g_glitchEndsAt) >= 0) {
                     g_glitchStyle = 0;
                     releaseTransformScreen();
 
@@ -2676,11 +2562,10 @@ static LRESULT CALLBACK WindowProc(
                     );
                 } else if (g_glitchStyle == 0 &&
                            (nextGlitchRandom() % 14) == 0) {
-
                     g_glitchStyle = 1 + nextGlitchRandom() % 7;
                     g_glitchEndsAt =
-                        now + 800 +
-                        nextGlitchRandom() % 2201;
+                            now + 800 +
+                            nextGlitchRandom() % 2201;
 
                     if (g_glitchStyle >= 5 && !captureTransformScreen()) {
                         g_glitchStyle = 1;
@@ -2704,9 +2589,8 @@ static LRESULT CALLBACK WindowProc(
 
             if (wParam ==
                 ARG_HOTKEY_ID) {
-
                 g_shutdownRequested =
-                    TRUE;
+                        TRUE;
 
                 PostMessageA(
                     hwnd,
@@ -2734,7 +2618,7 @@ static LRESULT CALLBACK WindowProc(
         case WM_CLOSE:
 
             g_shutdownRequested =
-                TRUE;
+                    TRUE;
             g_audioThreadStop = TRUE;
 
             stopGlitchEffects();
@@ -2776,8 +2660,7 @@ static LRESULT CALLBACK WindowProc(
 
 static BOOL createOverlay(
     HINSTANCE hInstance
-)
-{
+) {
     WNDCLASSEXA wc;
 
     ZeroMemory(
@@ -2786,16 +2669,16 @@ static BOOL createOverlay(
     );
 
     wc.cbSize =
-        sizeof(wc);
+            sizeof(wc);
 
     wc.lpfnWndProc =
-        WindowProc;
+            WindowProc;
 
     wc.hInstance =
-        hInstance;
+            hInstance;
 
     wc.lpszClassName =
-        ARG_WINDOW_CLASS;
+            ARG_WINDOW_CLASS;
 
     if (!RegisterClassExA(
         &wc
@@ -2804,36 +2687,36 @@ static BOOL createOverlay(
     }
 
     int width =
-        GetSystemMetrics(
-            SM_CXSCREEN
-        );
+            GetSystemMetrics(
+                SM_CXSCREEN
+            );
 
     int height =
-        GetSystemMetrics(
-            SM_CYSCREEN
-        );
+            GetSystemMetrics(
+                SM_CYSCREEN
+            );
 
     DWORD extendedStyle =
-        WS_EX_LAYERED |
-        WS_EX_TOOLWINDOW |
-        WS_EX_TRANSPARENT |
-        WS_EX_NOACTIVATE;
+            WS_EX_LAYERED |
+            WS_EX_TOOLWINDOW |
+            WS_EX_TRANSPARENT |
+            WS_EX_NOACTIVATE;
 
     g_overlay =
-        CreateWindowExA(
-            extendedStyle,
-            ARG_WINDOW_CLASS,
-            "ARG",
-            WS_POPUP,
-            0,
-            0,
-            width,
-            height,
-            NULL,
-            NULL,
-            hInstance,
-            NULL
-        );
+            CreateWindowExA(
+                extendedStyle,
+                ARG_WINDOW_CLASS,
+                "ARG",
+                WS_POPUP,
+                0,
+                0,
+                width,
+                height,
+                NULL,
+                NULL,
+                hInstance,
+                NULL
+            );
 
     if (g_overlay == NULL) {
         return FALSE;
@@ -2871,16 +2754,15 @@ int WINAPI WinMain(
     HINSTANCE hPrevInstance,
     LPSTR lpCmdLine,
     int nCmdShow
-)
-{
-    (void)hPrevInstance;
-    (void)nCmdShow;
+) {
+    (void) hPrevInstance;
+    (void) nCmdShow;
 
     if (!getBasePath()) {
         return 1;
     }
 
-    (void)lpCmdLine;
+    (void) lpCmdLine;
 
     InitializeCriticalSection(&g_ttsLock);
 
@@ -2892,8 +2774,8 @@ int WINAPI WinMain(
     writeSessionMemory("active");
 
     srand(
-        ((unsigned int)time(NULL)) ^
-        ((unsigned int)GetCurrentProcessId())
+        ((unsigned int) time(NULL)) ^
+        ((unsigned int) GetCurrentProcessId())
     );
 
     if (!createOverlay(
@@ -2913,7 +2795,6 @@ int WINAPI WinMain(
         0,
         VK_F10
     )) {
-
         MessageBoxA(
             NULL,
             "Could not register F10 shutdown hotkey.",
@@ -2936,14 +2817,14 @@ int WINAPI WinMain(
      * Start audio events.
      */
     HANDLE audio =
-        CreateThread(
-            NULL,
-            0,
-            audioThread,
-            NULL,
-            0,
-            NULL
-        );
+            CreateThread(
+                NULL,
+                0,
+                audioThread,
+                NULL,
+                0,
+                NULL
+            );
 
     if (audio != NULL) {
         CloseHandle(audio);
@@ -2990,9 +2871,8 @@ int WINAPI WinMain(
         ) {
             if (message.message ==
                 WM_QUIT) {
-
                 g_shutdownRequested =
-                    TRUE;
+                        TRUE;
 
                 break;
             }
@@ -3013,12 +2893,12 @@ int WINAPI WinMain(
         if (phase == STEP_1 && now >= phaseEndsAt) {
             phase = STEP_2;
             phaseEndsAt = now +
-                60000 + nextGlitchRandom() % 60001;
+                          60000 + nextGlitchRandom() % 60001;
             startGlitchEffects();
         } else if (phase == STEP_2 && now >= phaseEndsAt) {
             phase = STEP_3A;
             phaseEndsAt = now +
-                60000 + nextGlitchRandom() % 60001;
+                          60000 + nextGlitchRandom() % 60001;
             nextTextAt = now;
         } else if (phase == STEP_3A) {
             if (now >= phaseEndsAt) {
@@ -3028,44 +2908,39 @@ int WINAPI WinMain(
             } else if (now >= nextTextAt &&
                        g_textProcessCount <
                        ARG_MAX_TEXT_PROCESSES) {
-
                 startRandomTextWindow();
                 nextTextAt = now +
-                    3000 + nextGlitchRandom() % 5001;
+                             3000 + nextGlitchRandom() % 5001;
             }
         } else if (phase == STEP_3B &&
                    g_textProcessCount == 0) {
-
             if (g_nextPoem >= ARG_RESERVED_POEMS) {
                 phase = STEP_4;
                 g_nextMouseInversionAt =
-                    GetTickCount() + 3000 +
-                    nextGlitchRandom() % 7001;
+                        GetTickCount() + 3000 +
+                        nextGlitchRandom() % 7001;
                 g_nextKeyboardBlockAt =
-                    GetTickCount() + 4000 +
-                    nextGlitchRandom() % 7001;
+                        GetTickCount() + 4000 +
+                        nextGlitchRandom() % 7001;
                 startTts();
             } else if (now >= nextTextAt) {
                 startPoemWindow();
                 nextTextAt = now + 500;
             }
         } else if (phase == STEP_4) {
-
             DWORD currentTime = GetTickCount();
 
             updateKeyboardBlock(currentTime);
 
             if (g_mouseInversionAllowed && g_mouseInversionActive &&
-                (LONG)(currentTime - g_mouseInversionEndsAt) >= 0) {
-
+                (LONG) (currentTime - g_mouseInversionEndsAt) >= 0) {
                 stopMouseInversion();
                 g_nextMouseInversionAt =
-                    currentTime + 4000 +
-                    nextGlitchRandom() % 10001;
+                        currentTime + 4000 +
+                        nextGlitchRandom() % 10001;
             } else if (g_mouseInversionAllowed && !g_mouseInversionActive &&
-                       (LONG)(currentTime -
+                       (LONG) (currentTime -
                                g_nextMouseInversionAt) >= 0) {
-
                 startMouseInversion(
                     1200 + nextGlitchRandom() % 2801
                 );
@@ -3075,7 +2950,7 @@ int WINAPI WinMain(
         if (phase == STEP_4 && g_ttsComplete) {
             phase = STEP_5;
             phaseEndsAt = now +
-                30000 + nextGlitchRandom() % 15001;
+                          30000 + nextGlitchRandom() % 15001;
             nextTextAt = now;
             startSplitOverlay();
         } else if (phase == STEP_5) {
@@ -3085,17 +2960,15 @@ int WINAPI WinMain(
 
             if (g_mouseInversionAllowed) {
                 if (g_mouseInversionActive &&
-                    (LONG)(currentTime -
-                           g_mouseInversionEndsAt) >= 0) {
-
+                    (LONG) (currentTime -
+                            g_mouseInversionEndsAt) >= 0) {
                     stopMouseInversion();
                     g_nextMouseInversionAt =
-                        currentTime + 4000 +
-                        nextGlitchRandom() % 10001;
+                            currentTime + 4000 +
+                            nextGlitchRandom() % 10001;
                 } else if (!g_mouseInversionActive &&
-                           (LONG)(currentTime -
+                           (LONG) (currentTime -
                                    g_nextMouseInversionAt) >= 0) {
-
                     startMouseInversion(
                         1200 + nextGlitchRandom() % 2801
                     );
@@ -3112,12 +2985,11 @@ int WINAPI WinMain(
             } else if (g_textProcessCount <
                        ARG_MAX_TEXT_PROCESSES &&
                        now >= nextTextAt) {
-
                 startStep5Window(
                     8000 + nextGlitchRandom() % 9001
                 );
                 nextTextAt = now +
-                    1200 + nextGlitchRandom() % 2201;
+                             1200 + nextGlitchRandom() % 2201;
             }
         } else if (phase == STEP_5_COMPLETE) {
             startStep6();

@@ -238,10 +238,11 @@ static void playStatic(void) {
     }
 
     /*
-     * 0.3 to 1.0 seconds.
+     * Ambient static should read as a distinct effect rather than a click.
+     * Step 7 retains its separately specified 50/100 ms overlays.
      */
     int duration =
-            300 + rand() % 701;
+            1200 + rand() % 1801;
 
     startStaticVisual((DWORD) duration);
     sleepInterruptible(
@@ -1180,6 +1181,7 @@ static BOOL acceptTerms(void) {
 
 typedef enum {
     TEXT_HOST_CMD,
+    TEXT_HOST_POWERSHELL,
     TEXT_HOST_NOTEPAD,
     TEXT_HOST_APPLICATION
 } TextHost;
@@ -1289,7 +1291,7 @@ static BOOL CALLBACK findWindowForProcess(
 static void closeTextProcess(
     TextProcess *textProcess
 ) {
-    if (textProcess->process == NULL) {
+    if (textProcess == NULL) {
         return;
     }
 
@@ -1308,25 +1310,32 @@ static void closeTextProcess(
             );
         }
 
-        PostMessageA(
-            textProcess->window,
-            WM_CLOSE,
-            0,
-            0
-        );
+        if (textProcess->process == NULL) {
+            DestroyWindow(textProcess->window);
+        } else {
+            PostMessageA(
+                textProcess->window,
+                WM_CLOSE,
+                0,
+                0
+            );
+        }
     }
 
-    if (WaitForSingleObject(
-            textProcess->process,
-            250
-        ) == WAIT_TIMEOUT) {
-        TerminateProcess(
-            textProcess->process,
-            0
-        );
+    if (textProcess->process != NULL) {
+        if (WaitForSingleObject(
+                textProcess->process,
+                250
+            ) == WAIT_TIMEOUT) {
+            TerminateProcess(
+                textProcess->process,
+                0
+            );
+        }
+
+        CloseHandle(textProcess->process);
     }
 
-    CloseHandle(textProcess->process);
     ZeroMemory(textProcess, sizeof(*textProcess));
 }
 
@@ -1339,10 +1348,14 @@ static void reapTextProcesses(void) {
         TextProcess *textProcess =
                 &g_textProcesses[index];
 
-        if (WaitForSingleObject(
-                textProcess->process,
-                0
-            ) == WAIT_OBJECT_0 ||
+        if ((textProcess->process != NULL &&
+             WaitForSingleObject(
+                 textProcess->process,
+                 0
+             ) == WAIT_OBJECT_0) ||
+            (textProcess->process == NULL &&
+             (textProcess->window == NULL ||
+              !IsWindow(textProcess->window))) ||
             (textProcess->closeAt != 0 &&
              (LONG) (now - textProcess->closeAt) >= 0)) {
             closeTextProcess(textProcess);
@@ -1415,6 +1428,19 @@ static void createGarbageText(
                 prefix[index]
             );
         }
+    } else if (host == TEXT_HOST_POWERSHELL) {
+        const wchar_t prefix[] = L"# ";
+
+        for (size_t index = 0;
+             prefix[index] != L'\0';
+             index++) {
+            appendCharacter(
+                buffer,
+                bufferSize,
+                &position,
+                prefix[index]
+            );
+        }
     }
 
     int length = 48 + nextGlitchRandom() % 65;
@@ -1458,52 +1484,49 @@ static BOOL startTextProcess(
 
     TextProcess *textProcess =
             &g_textProcesses[g_textProcessCount];
-    STARTUPINFOW startupInfo;
-    PROCESS_INFORMATION processInfo;
-    wchar_t commandLine[256];
+    HWND textWindow;
+    const wchar_t *prompt = L"";
+    int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    int top = GetSystemMetrics(SM_YVIRTUALSCREEN);
 
     ZeroMemory(textProcess, sizeof(*textProcess));
-    ZeroMemory(&startupInfo, sizeof(startupInfo));
-    ZeroMemory(&processInfo, sizeof(processInfo));
 
-    startupInfo.cb = sizeof(startupInfo);
+    /*
+     * A native edit window is program-owned and always accepts WM_CHAR.
+     * External terminal and Notepad hosts can delegate their UI to another
+     * process, which made reliable typing and safe cleanup impossible.
+     */
+    textWindow = CreateWindowExW(
+        WS_EX_TOOLWINDOW,
+        L"EDIT",
+        L"",
+        WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_VSCROLL |
+        ES_MULTILINE | ES_AUTOVSCROLL,
+        left + 80 + (g_textProcessCount % 3) * 48,
+        top + 80 + (g_textProcessCount % 3) * 48,
+        720,
+        420,
+        NULL,
+        NULL,
+        GetModuleHandleW(NULL),
+        NULL
+    );
 
-    if (host == TEXT_HOST_CMD) {
-        swprintf(
-            commandLine,
-            sizeof(commandLine) / sizeof(commandLine[0]),
-            L"cmd.exe /k title ARG_TEXT_%lu",
-            (unsigned long) GetCurrentProcessId()
-        );
-    } else {
-        wcscpy(commandLine, L"notepad.exe");
-    }
-
-    if (!CreateProcessW(
-        NULL,
-        commandLine,
-        NULL,
-        NULL,
-        FALSE,
-        CREATE_NEW_CONSOLE,
-        NULL,
-        NULL,
-        &startupInfo,
-        &processInfo
-    )) {
-        MessageBoxA(
-            NULL,
-            "Could not create an ARG text display.",
-            "ARG information",
-            MB_OK | MB_ICONINFORMATION
-        );
-
+    if (textWindow == NULL) {
         return FALSE;
     }
 
-    CloseHandle(processInfo.hThread);
-    textProcess->process = processInfo.hProcess;
-    textProcess->processId = processInfo.dwProcessId;
+    if (host == TEXT_HOST_CMD) {
+        prompt = L"Microsoft Windows [ARG session]\r\nC:\\> ";
+    } else if (host == TEXT_HOST_POWERSHELL) {
+        prompt = L"Windows PowerShell [ARG session]\r\nPS C:\\> ";
+    }
+
+    SendMessageW(textWindow, WM_SETFONT,
+                 (WPARAM) GetStockObject(ANSI_FIXED_FONT), TRUE);
+    SetWindowTextW(textWindow, prompt);
+    SendMessageW(textWindow, EM_SETSEL, (WPARAM) -1, (LPARAM) -1);
+    textProcess->window = textWindow;
     textProcess->host = host;
     textProcess->autoType = TRUE;
     textProcess->startedAt = GetTickCount();
@@ -1647,16 +1670,9 @@ static void updateTextProcesses(void) {
 
         if (textProcess->window == NULL &&
             !textProcess->errorReported &&
-            (LONG) (now - textProcess->startedAt) >= 5000) {
+            (LONG) (now - textProcess->startedAt) >= 10000) {
             textProcess->errorReported = TRUE;
             textProcess->closeAt = now;
-
-            MessageBoxA(
-                NULL,
-                "ARG could not identify its text window.",
-                "ARG information",
-                MB_OK | MB_ICONINFORMATION
-            );
         }
 
         if (g_splitOverlayActive &&
@@ -2035,6 +2051,16 @@ static DWORD WINAPI ttsThread(
         }
 
         free(widePoem);
+
+        /* Keep each poem distinct without ever blocking the UI message loop. */
+        if (index + 1 < ARG_RESERVED_POEMS) {
+            DWORD pauseEndsAt = GetTickCount() + 1200;
+
+            while (!g_shutdownRequested &&
+                   (LONG) (GetTickCount() - pauseEndsAt) < 0) {
+                Sleep(50);
+            }
+        }
     }
 
     EnterCriticalSection(&g_ttsLock);
@@ -2127,9 +2153,7 @@ static void sayStep6Warning(void) {
 static void startRandomTextWindow(void) {
     wchar_t text[ARG_TEXT_BUFFER_SIZE];
     TextHost host =
-            (nextGlitchRandom() % 2) == 0
-                ? TEXT_HOST_CMD
-                : TEXT_HOST_NOTEPAD;
+            (TextHost) (nextGlitchRandom() % 3);
 
     createGarbageText(text, sizeof(text) / sizeof(text[0]), host);
     startTextProcess(host, text);
@@ -2142,9 +2166,7 @@ static void startPoemWindow(void) {
 
     wchar_t text[ARG_TEXT_BUFFER_SIZE];
     TextHost host =
-            (nextGlitchRandom() % 2) == 0
-                ? TEXT_HOST_CMD
-                : TEXT_HOST_NOTEPAD;
+            (TextHost) (nextGlitchRandom() % 3);
     const char *poem = g_poems[
         g_reservedPoems[g_nextPoem]
     ];
@@ -2157,11 +2179,15 @@ static void startPoemWindow(void) {
          position + 5 < ARG_TEXT_BUFFER_SIZE;
          index++) {
         if ((index == 0 || poem[index - 1] == '\n') &&
-            host == TEXT_HOST_CMD) {
-            appendCharacter(text, ARG_TEXT_BUFFER_SIZE, &position, L'R');
-            appendCharacter(text, ARG_TEXT_BUFFER_SIZE, &position, L'E');
-            appendCharacter(text, ARG_TEXT_BUFFER_SIZE, &position, L'M');
-            appendCharacter(text, ARG_TEXT_BUFFER_SIZE, &position, L' ');
+            (host == TEXT_HOST_CMD || host == TEXT_HOST_POWERSHELL)) {
+            const wchar_t *prefix = host == TEXT_HOST_CMD ? L"REM " : L"# ";
+
+            for (size_t prefixIndex = 0;
+                 prefix[prefixIndex] != L'\0';
+                 prefixIndex++) {
+                appendCharacter(text, ARG_TEXT_BUFFER_SIZE, &position,
+                                prefix[prefixIndex]);
+            }
         }
 
         appendCharacter(
@@ -2267,13 +2293,22 @@ static void stopStep6(void) {
     }
 }
 
-static void startStep6(void) {
-    int width = GetSystemMetrics(SM_CXSCREEN);
-    int height = GetSystemMetrics(SM_CYSCREEN);
-    HDC screen = GetDC(NULL);
+static BOOL startStep6(void) {
+    RECT clientRect;
+    HDC overlay;
+    int width;
+    int height;
 
-    if (screen == NULL || g_overlay == NULL) {
-        return;
+    if (g_overlay == NULL || !GetClientRect(g_overlay, &clientRect)) {
+        return FALSE;
+    }
+
+    width = clientRect.right - clientRect.left;
+    height = clientRect.bottom - clientRect.top;
+    overlay = GetDC(g_overlay);
+
+    if (overlay == NULL || width <= 0 || height <= 0) {
+        return FALSE;
     }
 
     g_smileFont = CreateFontA(
@@ -2294,37 +2329,42 @@ static void startStep6(void) {
     );
 
     if (g_smileFont == NULL) {
-        ReleaseDC(NULL, screen);
-        return;
+        ReleaseDC(g_overlay, overlay);
+        return FALSE;
     }
 
-    HFONT previous = SelectObject(screen, g_smileFont);
+    HFONT previous = SelectObject(overlay, g_smileFont);
     SIZE size;
-    GetTextExtentPoint32A(screen, ":)", 2, &size);
+    GetTextExtentPoint32A(overlay, ":)", 2, &size);
     int y = (height - size.cy) / 2;
     int leftX = width / 4 - size.cx / 2;
     int rightX = width * 3 / 4 - size.cx / 2;
 
-    BeginPath(screen);
-    TextOutA(screen, leftX, y, ":)", 2);
-    EndPath(screen);
-    g_smileRegion = PathToRegion(screen);
+    BeginPath(overlay);
+    TextOutA(overlay, leftX, y, ":)", 2);
+    EndPath(overlay);
+    g_smileRegion = PathToRegion(overlay);
 
-    BeginPath(screen);
-    TextOutA(screen, rightX, y, ":)", 2);
-    EndPath(screen);
-    HRGN rightRegion = PathToRegion(screen);
+    BeginPath(overlay);
+    TextOutA(overlay, rightX, y, ":)", 2);
+    EndPath(overlay);
+    HRGN rightRegion = PathToRegion(overlay);
 
     if (g_smileRegion != NULL && rightRegion != NULL) {
         CombineRgn(g_smileRegion, g_smileRegion, rightRegion, RGN_OR);
+    } else {
+        if (g_smileRegion != NULL) {
+            DeleteObject(g_smileRegion);
+            g_smileRegion = NULL;
+        }
     }
 
     if (rightRegion != NULL) {
         DeleteObject(rightRegion);
     }
 
-    SelectObject(screen, previous);
-    ReleaseDC(NULL, screen);
+    SelectObject(overlay, previous);
+    ReleaseDC(g_overlay, overlay);
 
     g_step6BlockedClicks = 0;
     g_step6Active = g_smileRegion != NULL;
@@ -2336,6 +2376,8 @@ static void startStep6(void) {
         LWA_COLORKEY
     );
     InvalidateRect(g_overlay, NULL, FALSE);
+
+    return g_step6Active;
 }
 
 static void paintGlitch(
@@ -2487,11 +2529,9 @@ static LRESULT CALLBACK WindowProc(
     switch (message) {
         case WM_NCHITTEST:
             if (g_step6Active) {
-                POINT point = {
-                    (short) LOWORD(lParam),
-                    (short) HIWORD(lParam)
-                };
+                POINT point;
 
+                GetCursorPos(&point);
                 ScreenToClient(hwnd, &point);
 
                 return PtInRegion(
@@ -2591,6 +2631,7 @@ static LRESULT CALLBACK WindowProc(
                 ARG_HOTKEY_ID) {
                 g_shutdownRequested =
                         TRUE;
+                g_audioThreadStop = TRUE;
 
                 PostMessageA(
                     hwnd,
@@ -2601,6 +2642,16 @@ static LRESULT CALLBACK WindowProc(
             }
 
             return 0;
+
+        case WM_KEYDOWN:
+        case WM_SYSKEYDOWN:
+            if (wParam == VK_F10) {
+                g_shutdownRequested = TRUE;
+                g_audioThreadStop = TRUE;
+                PostMessageA(hwnd, WM_CLOSE, 0, 0);
+                return 0;
+            }
+            break;
 
         case WM_LBUTTONDOWN:
             if (g_step6Active) {
@@ -2640,10 +2691,7 @@ static LRESULT CALLBACK WindowProc(
 
         case WM_DESTROY:
 
-            UnregisterHotKey(
-                NULL,
-                ARG_HOTKEY_ID
-            );
+            UnregisterHotKey(hwnd, ARG_HOTKEY_ID);
 
             PostQuitMessage(0);
 
@@ -2686,20 +2734,14 @@ static BOOL createOverlay(
         return FALSE;
     }
 
-    int width =
-            GetSystemMetrics(
-                SM_CXSCREEN
-            );
-
-    int height =
-            GetSystemMetrics(
-                SM_CYSCREEN
-            );
+    int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    int top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    int height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
     DWORD extendedStyle =
             WS_EX_LAYERED |
             WS_EX_TOOLWINDOW |
-            WS_EX_TRANSPARENT |
             WS_EX_NOACTIVATE;
 
     g_overlay =
@@ -2708,8 +2750,8 @@ static BOOL createOverlay(
                 ARG_WINDOW_CLASS,
                 "ARG",
                 WS_POPUP,
-                0,
-                0,
+                left,
+                top,
                 width,
                 height,
                 NULL,
@@ -2732,8 +2774,8 @@ static BOOL createOverlay(
     SetWindowPos(
         g_overlay,
         HWND_TOPMOST,
-        0,
-        0,
+        left,
+        top,
         width,
         height,
         SWP_NOACTIVATE |
@@ -2790,9 +2832,9 @@ int WINAPI WinMain(
      * F10 is global to this process.
      */
     if (!RegisterHotKey(
-        NULL,
+        g_overlay,
         ARG_HOTKEY_ID,
-        0,
+        MOD_NOREPEAT,
         VK_F10
     )) {
         MessageBoxA(
@@ -2992,8 +3034,7 @@ int WINAPI WinMain(
                              1200 + nextGlitchRandom() % 2201;
             }
         } else if (phase == STEP_5_COMPLETE) {
-            startStep6();
-            phase = STEP_6;
+            phase = startStep6() ? STEP_6 : STEP_7_PENDING;
         } else if (phase == STEP_6 && g_step6Complete) {
             phase = STEP_7_PENDING;
         } else if (phase == STEP_7_PENDING) {
@@ -3047,10 +3088,9 @@ int WINAPI WinMain(
         0
     );
 
-    UnregisterHotKey(
-        NULL,
-        ARG_HOTKEY_ID
-    );
+    if (g_overlay != NULL) {
+        UnregisterHotKey(g_overlay, ARG_HOTKEY_ID);
+    }
 
     if (g_overlay != NULL) {
         DestroyWindow(

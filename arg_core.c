@@ -1,3 +1,5 @@
+#include <shlobj.h>
+
 #include "arg_internal.h"
 
 BOOL getBasePath(void) {
@@ -29,16 +31,14 @@ BOOL getBasePath(void) {
 }
 
 BOOL isValidTreeExecutable(const BYTE *data, DWORD length) {
-    DWORD peOffset;
-
     if (data == NULL || length < 64 || data[0] != 'M' || data[1] != 'Z') {
         return FALSE;
     }
 
-    peOffset = (DWORD) data[60] |
-               ((DWORD) data[61] << 8) |
-               ((DWORD) data[62] << 16) |
-               ((DWORD) data[63] << 24);
+    DWORD peOffset = (DWORD) data[60] |
+                     ((DWORD) data[61] << 8) |
+                     ((DWORD) data[62] << 16) |
+                     ((DWORD) data[63] << 24);
 
     return peOffset <= length - 4 &&
            memcmp(data + peOffset, "PE\0\0", 4) == 0;
@@ -48,19 +48,16 @@ BOOL extractTreeExecutable(void) {
     char dataPath[MAX_PATH * 2];
     char executablePath[MAX_PATH * 2];
     char temporaryPath[MAX_PATH * 2 + 16];
-    FILE *input;
-    FILE *output;
-    long length;
 
     snprintf(dataPath, sizeof(dataPath), "%s\\tree.dat", g_basePath);
     snprintf(executablePath, sizeof(executablePath), "%s\\tree.exe",
              g_basePath);
-    input = fopen(dataPath, "rb");
+    FILE *input = fopen(dataPath, "rb");
 
     if (input == NULL) return FALSE;
 
     fseek(input, 0, SEEK_END);
-    length = ftell(input);
+    long length = ftell(input);
     rewind(input);
 
     if (length <= 0) {
@@ -108,7 +105,7 @@ BOOL extractTreeExecutable(void) {
 
     snprintf(temporaryPath, sizeof(temporaryPath), "%s.tmp",
              executablePath);
-    output = fopen(temporaryPath, "wb");
+    FILE *output = fopen(temporaryPath, "wb");
 
     if (output == NULL ||
         fwrite(decoded, 1, decodedLength, output) != decodedLength) {
@@ -219,11 +216,10 @@ void writeSessionMemory(
     const char *status
 ) {
     char path[MAX_PATH * 2];
-    FILE *file;
 
     snprintf(path, sizeof(path), "%s\\%s", g_basePath,
              ARG_SESSION_FILE);
-    file = fopen(path, "w");
+    FILE *file = fopen(path, "w");
 
     if (file == NULL) {
         return;

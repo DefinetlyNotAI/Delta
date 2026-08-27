@@ -1,7 +1,6 @@
 #ifndef ARG_INTERNAL_H
 #define ARG_INTERNAL_H
 
-#define WIN32_LEAN_AND_MEAN
 #ifndef COBJMACROS
 #define COBJMACROS
 #endif
@@ -12,13 +11,8 @@
 #include <gdiplus.h>
 #include <sapi.h>
 #include <wincrypt.h>
-#include <shlobj.h>
 
-#include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
 #include <wchar.h>
 
 #define ARG_WINDOW_CLASS "ARG_Overlay"

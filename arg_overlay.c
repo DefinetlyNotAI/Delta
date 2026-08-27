@@ -36,14 +36,13 @@ void stopGlitchEffects(void) {
 }
 
 BOOL captureTransformScreen(void) {
-    HDC screen;
     int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
     int top = GetSystemMetrics(SM_YVIRTUALSCREEN);
 
     releaseTransformScreen();
     g_transformWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
     g_transformHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-    screen = GetDC(NULL);
+    HDC screen = GetDC(NULL);
 
     if (screen == NULL || g_transformWidth <= 0 ||
         g_transformHeight <= 0) {
@@ -397,17 +396,14 @@ void stopStep6(void) {
 
 BOOL startStep6(void) {
     RECT clientRect;
-    HDC overlay;
-    int width;
-    int height;
 
     if (g_overlay == NULL || !GetClientRect(g_overlay, &clientRect)) {
         return FALSE;
     }
 
-    width = clientRect.right - clientRect.left;
-    height = clientRect.bottom - clientRect.top;
-    overlay = GetDC(g_overlay);
+    int width = clientRect.right - clientRect.left;
+    int height = clientRect.bottom - clientRect.top;
+    HDC overlay = GetDC(g_overlay);
 
     if (overlay == NULL || width <= 0 || height <= 0) {
         return FALSE;
@@ -628,7 +624,8 @@ LRESULT CALLBACK WindowProc(
     WPARAM wParam,
     LPARAM lParam
 ) {
-    switch (message) {
+    // ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
+    switch (message) { // NOLINT(*-multiway-paths-covered)
         case WM_NCHITTEST:
             if (g_step6Active) {
                 POINT point;

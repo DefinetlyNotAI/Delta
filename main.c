@@ -1,13 +1,15 @@
+#include <time.h>
+
 #include "arg_internal.h"
 
 int WINAPI WinMain(
     HINSTANCE hInstance,
     HINSTANCE hPrevInstance,
-    LPSTR lpCmdLine,
-    int nCmdShow
+    LPSTR lpCmdLine, // NOLINT(*-non-const-parameter)
+    int nShowCmd
 ) {
     (void) hPrevInstance;
-    (void) nCmdShow;
+    (void) nShowCmd;
 
     if (!getBasePath()) {
         return 1;

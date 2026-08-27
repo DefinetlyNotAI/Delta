@@ -217,7 +217,6 @@ BOOL startTextProcess(
 
     TextProcess *textProcess =
             &g_textProcesses[g_textProcessCount];
-    HWND textWindow;
     const wchar_t *prompt = L"";
     int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
     int top = GetSystemMetrics(SM_YVIRTUALSCREEN);
@@ -229,7 +228,7 @@ BOOL startTextProcess(
      * External terminal and Notepad hosts can delegate their UI to another
      * process, which made reliable typing and safe cleanup impossible.
      */
-    textWindow = CreateWindowExW(
+    HWND textWindow = CreateWindowExW(
         WS_EX_TOOLWINDOW,
         L"EDIT",
         L"",
@@ -468,7 +467,6 @@ void updateTextProcesses(void) {
 
 BOOL loadPoems(void) {
     char path[MAX_PATH * 2];
-    FILE *file;
     char line[512];
     size_t position = 0;
 
@@ -479,7 +477,7 @@ BOOL loadPoems(void) {
         g_basePath
     );
 
-    file = fopen(path, "r");
+    FILE *file = fopen(path, "r");
 
     if (file == NULL) {
         return FALSE;

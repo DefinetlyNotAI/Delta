@@ -70,8 +70,6 @@ BOOL playMP3(
 BOOL sleepInterruptible(
     DWORD milliseconds
 ) {
-    const DWORD interval = 50;
-
     DWORD elapsed = 0;
 
     while (
@@ -79,6 +77,7 @@ BOOL sleepInterruptible(
         !g_shutdownRequested &&
         !g_audioThreadStop
     ) {
+        const DWORD interval = 50;
         DWORD remaining =
                 milliseconds - elapsed;
 
@@ -306,8 +305,8 @@ void generateMachineWhirr(void) {
                 sin(phase3) * 0.06;
 
         double noise =
-                ((double) rand() /
-                 RAND_MAX) *
+                (double) rand() /
+                RAND_MAX *
                 2.0 -
                 1.0;
 
@@ -383,6 +382,7 @@ DWORD WINAPI audioThread(
             break;
         }
 
+        // ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
         switch (rand() % 3) {
             case 0:
                 playStatic();

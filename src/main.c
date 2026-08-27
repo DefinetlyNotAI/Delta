@@ -121,7 +121,7 @@ int WINAPI WinMain(
                         STEP_7_PENDING;
 
                 continue;
-                }
+            }
 
             TranslateMessage(
                 &message
@@ -179,6 +179,7 @@ int WINAPI WinMain(
             updateKeyboardBlock(currentTime);
 
             if (g_mouseInversionAllowed && g_mouseInversionActive &&
+
 
                 (LONG)(currentTime - g_mouseInversionEndsAt) >= 0
             )

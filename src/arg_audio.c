@@ -227,7 +227,7 @@ void generateMachineWhirr(void) {
     );
 
     *(DWORD *) (wav + 4) =
-            (DWORD) (fileSize - 8u);
+            (DWORD)(fileSize - 8u);
 
     memcpy(
         wav + 8,

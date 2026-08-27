@@ -500,8 +500,8 @@ void startMouseInversion(
     }
 
     if (!GetCursorPos(
-            &g_lastMousePosition
-        )) {
+        &g_lastMousePosition
+    )) {
         return;
     }
 
@@ -607,10 +607,10 @@ void updateKeyboardBlock(
     }
 
     if (g_keyboardBlockActive &&
-        tickReached(
-            now,
-            g_keyboardBlockEndsAt
-        )) {
+            tickReached(
+                now,
+                g_keyboardBlockEndsAt
+            )) {
         stopKeyboardBlock();
 
         g_nextKeyboardBlockAt =
@@ -775,11 +775,11 @@ BOOL startStep6(void) {
     SIZE size;
 
     if (!GetTextExtentPoint32A(
-            overlay,
-            ":)",
-            2,
-            &size
-        )) {
+        overlay,
+        ":)",
+        2,
+        &size
+    )) {
         SelectObject(
             overlay,
             previous
@@ -960,11 +960,11 @@ void paintGlitch(
         SIZE size;
 
         if (!GetTextExtentPoint32A(
-                deviceContext,
-                ":)",
-                2,
-                &size
-            )) {
+            deviceContext,
+            ":)",
+            2,
+            &size
+        )) {
             SelectObject(
                 deviceContext,
                 previous
@@ -1116,17 +1116,17 @@ void paintGlitch(
 
     if (g_splitOverlayActive) {
         RECT vertical = {
-            (LONG) (width / 2 - 6),
+            (LONG)(width / 2 - 6),
             0,
-            (LONG) (width / 2 + 6),
+            (LONG)(width / 2 + 6),
             (LONG) height
         };
 
         RECT horizontal = {
             0,
-            (LONG) (height / 2 - 6),
+            (LONG)(height / 2 - 6),
             (LONG) width,
-            (LONG) (height / 2 + 6)
+            (LONG)(height / 2 + 6)
         };
 
         HBRUSH divider =
@@ -1167,13 +1167,13 @@ void paintGlitch(
         RECT block;
 
         block.left =
-                (LONG) (
+                (LONG)(
                     nextGlitchRandom() %
                     randomWidth
                 );
 
         block.top =
-                (LONG) (
+                (LONG)(
                     nextGlitchRandom() %
                     randomHeight
                 );
@@ -1181,7 +1181,7 @@ void paintGlitch(
         block.right =
                 block.left +
                 30L +
-                (LONG) (
+                (LONG)(
                     nextGlitchRandom() %
                     220U
                 );
@@ -1189,7 +1189,7 @@ void paintGlitch(
         block.bottom =
                 block.top +
                 12L +
-                (LONG) (
+                (LONG)(
                     nextGlitchRandom() %
                     100U
                 );
@@ -1281,7 +1281,11 @@ LRESULT CALLBACK WindowProc(
     switch (message) { // NOLINT(*-multiway-paths-covered)
         case WM_NCHITTEST:
             if (g_step6Active &&
-                g_smileRegion != NULL) {
+                g_smileRegion
+            !=
+            NULL
+            )
+            {
                 POINT point;
 
                 if (!GetCursorPos(
@@ -1334,15 +1338,15 @@ LRESULT CALLBACK WindowProc(
 
         case WM_TIMER:
             if (wParam ==
-                    ARG_STATIC_TIMER_ID &&
+                ARG_STATIC_TIMER_ID &&
                 g_staticVisible) {
                 DWORD now =
                         GetTickCount();
 
                 if (tickReached(
-                        now,
-                        g_staticEndsAt
-                    )) {
+                    now,
+                    g_staticEndsAt
+                )) {
                     stopStaticVisual();
                 } else if (
                     g_staticImage != NULL
@@ -1364,7 +1368,7 @@ LRESULT CALLBACK WindowProc(
             }
 
             if (wParam ==
-                    ARG_GLITCH_TIMER_ID &&
+                ARG_GLITCH_TIMER_ID &&
                 g_glitchesEnabled &&
                 !g_shutdownRequested) {
                 DWORD now =
@@ -1494,7 +1498,7 @@ LRESULT CALLBACK WindowProc(
                         0,
                         0
                     );
-                    }
+                }
             }
 
             return 0;
@@ -1564,8 +1568,8 @@ BOOL createOverlay(
             ARG_WINDOW_CLASS;
 
     if (!RegisterClassExA(
-            &wc
-        )) {
+        &wc
+    )) {
         return FALSE;
     }
 

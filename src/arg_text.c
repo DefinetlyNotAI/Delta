@@ -176,7 +176,7 @@ void createGarbageText(
         }
     }
 
-    int length = 48 + (int)(nextGlitchRandom() % 65U);
+    int length = 48 + (int) (nextGlitchRandom() % 65U);
 
     for (int index = 0; index < length; index++) {
         wchar_t character;
@@ -245,17 +245,17 @@ BOOL startTextProcess(
     ] = L'\0';
 
     if (!CreateProcessW(
-            NULL,
-            mutableCommandLine,
-            NULL,
-            NULL,
-            FALSE,
-            0,
-            NULL,
-            NULL,
-            &startupInfo,
-            &processInfo
-        )) {
+        NULL,
+        mutableCommandLine,
+        NULL,
+        NULL,
+        FALSE,
+        0,
+        NULL,
+        NULL,
+        &startupInfo,
+        &processInfo
+    )) {
         return FALSE;
     }
 
@@ -412,6 +412,7 @@ void updateTextProcesses(void) {
 
         if (g_splitOverlayActive &&
             textProcess
+
         ->
         window != NULL
         )
@@ -534,7 +535,7 @@ void reservePoems(void) {
 
     for (int index = g_poemCount - 1; index > 0; index--) {
         int swapIndex =
-                (int)(nextGlitchRandom() % (unsigned int)(index + 1));
+                (int) (nextGlitchRandom() % (unsigned int) (index + 1));
         int value = order[index];
 
         order[index] = order[swapIndex];
@@ -857,6 +858,7 @@ void startStep5Window(
         startApplicationProcess(applications[choice], duration);
     } else if (g_browserAllowed &&
         choice
+
     ==
     sizeof(applications) /
             sizeof(applications[0])

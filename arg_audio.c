@@ -1,4 +1,7 @@
+#define _CRT_RAND_S // NOLINT(*-reserved-identifier)
+
 #include "arg_internal.h"
+#include <stdlib.h>
 
 void stopMP3(void) {
     mciSendStringA(
@@ -94,6 +97,18 @@ BOOL sleepInterruptible(
     return !g_shutdownRequested && !g_audioThreadStop;
 }
 
+
+static unsigned int randomUInt(void) {
+    unsigned int value = 0;
+
+    if (rand_s(&value) != 0) {
+        return 0;
+    }
+
+    return value;
+}
+
+
 void playStatic(void) {
     char path[MAX_PATH * 2];
 
@@ -120,7 +135,8 @@ void playStatic(void) {
      * Step 7 retains its separately specified 50/100 ms overlays.
      */
     int duration =
-            1200 + rand() % 1801;
+            1200 +
+            (int) (randomUInt() % 1801u);
 
     startStaticVisual((DWORD) duration);
     sleepInterruptible(
@@ -183,13 +199,13 @@ void generateMachineWhirr(void) {
                 duration
             );
 
-    const int dataSize =
-            sampleCount *
-            channels *
+    const size_t dataSize =
+            (size_t) sampleCount *
+            (size_t) channels *
             sizeof(short);
 
-    const int fileSize =
-            44 +
+    const size_t fileSize =
+            44u +
             dataSize;
 
     BYTE *wav =
@@ -211,7 +227,7 @@ void generateMachineWhirr(void) {
     );
 
     *(DWORD *) (wav + 4) =
-            fileSize - 8;
+            (DWORD) (fileSize - 8u);
 
     memcpy(
         wav + 8,
@@ -251,7 +267,7 @@ void generateMachineWhirr(void) {
     );
 
     *(DWORD *) (wav + 40) =
-            dataSize;
+            (DWORD) dataSize;
 
     short *samples =
             (short *) (wav + 44);
@@ -305,7 +321,7 @@ void generateMachineWhirr(void) {
                 sin(phase3) * 0.06;
 
         double noise =
-                (double) rand() /
+                (double) randomUInt() /
                 RAND_MAX *
                 2.0 -
                 1.0;
@@ -370,7 +386,7 @@ DWORD WINAPI audioThread(
     while (!g_shutdownRequested && !g_audioThreadStop) {
         int delay =
                 5000 +
-                rand() % 15001;
+                (int) (randomUInt() % 15001u);
 
         if (!sleepInterruptible(
             delay
@@ -383,7 +399,7 @@ DWORD WINAPI audioThread(
         }
 
         // ReSharper disable once CppDefaultCaseNotHandledInSwitchStatement
-        switch (rand() % 3) {
+        switch (randomUInt() % 3) {
             case 0:
                 playStatic();
                 break;

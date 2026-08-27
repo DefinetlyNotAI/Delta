@@ -37,22 +37,22 @@ target_link_libraries(TREE PRIVATE
         gdiplus
 )
 
-foreach(target ARG TREE)
+foreach (target ARG TREE)
     target_compile_features(${target} PRIVATE c_std_11)
 
-    if(MSVC)
+    if (MSVC)
         target_compile_options(${target} PRIVATE
                 /W4
                 /permissive-
         )
-    else()
+    else ()
         target_compile_options(${target} PRIVATE
                 -Wall
                 -Wextra
                 -Wpedantic
         )
-    endif()
-endforeach()
+    endif ()
+endforeach ()
 
 target_compile_definitions(ARG PRIVATE
         WIN32_LEAN_AND_MEAN

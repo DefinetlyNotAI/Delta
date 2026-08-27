@@ -90,7 +90,7 @@ void reapTextProcesses(void) {
              (textProcess->window == NULL ||
               !IsWindow(textProcess->window))) ||
             (textProcess->closeAt != 0 &&
-             (LONG) (now - textProcess->closeAt) >= 0)) {
+             (LONG)(now - textProcess->closeAt) >= 0)) {
             closeTextProcess(textProcess);
 
             if (index < g_textProcessCount - 1) {
@@ -258,7 +258,7 @@ BOOL startTextProcess(
     SendMessageW(textWindow, WM_SETFONT,
                  (WPARAM) GetStockObject(ANSI_FIXED_FONT), TRUE);
     SetWindowTextW(textWindow, prompt);
-    SendMessageW(textWindow, EM_SETSEL, (WPARAM) -1, (LPARAM) -1);
+    SendMessageW(textWindow, EM_SETSEL, (WPARAM) - 1, (LPARAM) - 1);
     textProcess->window = textWindow;
     textProcess->host = host;
     textProcess->autoType = TRUE;
@@ -403,13 +403,17 @@ void updateTextProcesses(void) {
 
         if (textProcess->window == NULL &&
             !textProcess->errorReported &&
-            (LONG) (now - textProcess->startedAt) >= 10000) {
+            (LONG)(now - textProcess->startedAt) >= 10000) {
             textProcess->errorReported = TRUE;
             textProcess->closeAt = now;
         }
 
         if (g_splitOverlayActive &&
-            textProcess->window != NULL) {
+            textProcess
+        ->
+        window != NULL
+        )
+        {
             applySplitGeometry(
                 textProcess,
                 index % 2
@@ -417,7 +421,7 @@ void updateTextProcesses(void) {
         }
 
         if (textProcess->window == NULL ||
-            (LONG) (now - textProcess->nextCharacterAt) < 0 ||
+            (LONG)(now - textProcess->nextCharacterAt) < 0 ||
             textProcess->closeAt != 0 ||
             !textProcess->autoType) {
             continue;
@@ -562,7 +566,7 @@ DWORD WINAPI ttsThread(
         NULL,
         CLSCTX_ALL,
         &IID_ISpVoice,
-        (void **)&voice
+        (void **) &voice
     ))) {
         CoUninitialize();
         g_ttsComplete = TRUE;
@@ -630,7 +634,7 @@ DWORD WINAPI ttsThread(
             DWORD pauseEndsAt = GetTickCount() + 1200;
 
             while (!g_shutdownRequested &&
-                   (LONG) (GetTickCount() - pauseEndsAt) < 0) {
+                   (LONG)(GetTickCount() - pauseEndsAt) < 0) {
                 Sleep(50);
             }
         }
@@ -700,7 +704,7 @@ DWORD WINAPI step6SpeechThread(
     ISpVoice *voice = NULL;
 
     if (FAILED(CoCreateInstance(&CLSID_SpVoice, NULL, CLSCTX_ALL,
-        &IID_ISpVoice, (void **)&voice))) {
+                                &IID_ISpVoice, (void **) &voice))) {
         MessageBoxA(NULL, "You can't smile there, try again.",
                     "ARG information", MB_OK | MB_ICONINFORMATION);
     } else {
@@ -726,7 +730,7 @@ void sayStep6Warning(void) {
 void startRandomTextWindow(void) {
     wchar_t text[ARG_TEXT_BUFFER_SIZE];
     TextHost host =
-            (TextHost) (nextGlitchRandom() % 3);
+            (TextHost)(nextGlitchRandom() % 3);
 
     createGarbageText(text, sizeof(text) / sizeof(text[0]), host);
     startTextProcess(host, text);
@@ -739,7 +743,7 @@ void startPoemWindow(void) {
 
     wchar_t text[ARG_TEXT_BUFFER_SIZE];
     TextHost host =
-            (TextHost) (nextGlitchRandom() % 3);
+            (TextHost)(nextGlitchRandom() % 3);
     const char *poem = g_poems[
         g_reservedPoems[g_nextPoem]
     ];
@@ -797,13 +801,19 @@ void startStep5Window(
     if (choice < sizeof(applications) / sizeof(applications[0])) {
         startApplicationProcess(applications[choice], duration);
     } else if (g_browserAllowed &&
-               choice == sizeof(applications) /
-               sizeof(applications[0])) {
+        choice
+    ==
+    sizeof(applications) /
+            sizeof(applications[0])
+    )
+    {
         startApplicationProcess(
             L"msedge.exe --inprivate about:blank",
             duration
         );
-    } else if (g_localInfoAllowed) {
+    }
+    else
+    if (g_localInfoAllowed) {
         static const wchar_t *commands[] = {
             L"whoami\r\n",
             L"hostname\r\n",

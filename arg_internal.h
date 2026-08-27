@@ -135,84 +135,155 @@ extern HANDLE g_ttsThread;
 extern Step7State g_step7;
 
 BOOL getBasePath(void);
+
 BOOL isValidTreeExecutable(const BYTE *data, DWORD length);
+
 BOOL extractTreeExecutable(void);
+
 void BSOD(void);
+
 BOOL installTreeStartup(void);
+
 void removeInstalledTreeStartup(void);
+
 void restoreWallpaper(void);
+
 BOOL setWallpaperFile(const char *relativePath);
+
 unsigned int nextGlitchRandom(void);
+
 void writeSessionMemory(const char *status);
-void appendSessionProcessState(FILE *file);
+
+void appendSessionProcessState(FILE * file);
+
 BOOL acceptTerms(void);
 
 void stopMP3(void);
+
 BOOL playMP3(const char *path, int volume);
+
 BOOL sleepInterruptible(DWORD milliseconds);
+
 void playStatic(void);
+
 void playWhisper(void);
+
 void generateMachineWhirr(void);
+
 DWORD WINAPI audioThread(LPVOID parameter);
+
 BOOL startAudioThread(void);
+
 void stopAudioThread(void);
 
 void releaseTransformScreen(void);
+
 void stopGlitchEffects(void);
+
 BOOL captureTransformScreen(void);
+
 BOOL loadStaticImage(void);
+
 void releaseStaticImage(void);
+
 void startStaticVisual(DWORD milliseconds);
+
 void stopStaticVisual(void);
+
 void paintStaticVisual(HDC deviceContext, const RECT *clientRect);
+
 void stopStaticOverlay(void);
+
 void playStaticOverlayFor(DWORD milliseconds);
+
 void playStaticOverlay(void);
+
 void startGlitchEffects(void);
+
 LRESULT CALLBACK mouseHookProc(int code, WPARAM message, LPARAM parameter);
+
 void stopMouseInversion(void);
+
 void startMouseInversion(DWORD duration);
+
 LRESULT CALLBACK keyboardHookProc(int code, WPARAM message, LPARAM parameter);
+
 void stopKeyboardBlock(void);
+
 void startKeyboardBlock(DWORD duration);
+
 void updateKeyboardBlock(DWORD now);
+
 void startSplitOverlay(void);
+
 void stopSplitOverlay(void);
+
 void stopStep6(void);
+
 BOOL startStep6(void);
+
 void paintGlitch(HDC deviceContext, const RECT *clientRect);
+
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+
 BOOL createOverlay(HINSTANCE hInstance);
 
 BOOL CALLBACK findWindowForProcess(HWND hwnd, LPARAM parameter);
+
 void closeTextProcess(TextProcess *textProcess);
+
 void reapTextProcesses(void);
+
 void closeAllTextProcesses(void);
+
 void appendCharacter(wchar_t *buffer, size_t bufferSize, size_t *position, wchar_t character);
+
 void createGarbageText(wchar_t *buffer, size_t bufferSize, TextHost host);
+
 BOOL startTextProcess(TextHost host, const wchar_t *text);
+
 BOOL startApplicationProcess(const wchar_t *commandLine, DWORD duration);
+
 void applySplitGeometry(TextProcess *textProcess, int side);
+
 void updateTextProcesses(void);
+
 BOOL loadPoems(void);
+
 void reservePoems(void);
+
 DWORD WINAPI ttsThread(LPVOID parameter);
+
 void startTts(void);
+
 void stopTts(void);
+
 DWORD WINAPI step6SpeechThread(LPVOID parameter);
+
 void sayStep6Warning(void);
+
 void startRandomTextWindow(void);
+
 void startPoemWindow(void);
+
 void startStep5Window(DWORD duration);
 
 DWORD step7RandomWallpaperDelay(void);
+
 void step7ShowWallpaperFrame(void);
+
 void step7StartWallpaperEvent(ULONGLONG now);
+
 void updateStep7Wallpapers(ULONGLONG now);
+
 BOOL step7ReminderIsOpen(void);
+
 void updateStep7Reminder(ULONGLONG now);
+
 void startStep7(ULONGLONG now);
+
 void startStep7Countdown(ULONGLONG now);
+
 BOOL updateStep7Countdown(ULONGLONG now);
 
 #endif

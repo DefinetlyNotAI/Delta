@@ -60,8 +60,7 @@ static HFONT g_storyFont = NULL;
  *
  * This does not crash Windows. It simply terminates tree.exe successfully.
  */
-static void BSOD(void)
-{
+static void BSOD(void) {
     ExitProcess(EXIT_SUCCESS);
 }
 
@@ -70,9 +69,11 @@ static void BSOD(void)
 /* DPI                                                                       */
 /* ------------------------------------------------------------------------- */
 
-static void enableDpiAwareness(void)
-{
-    typedef BOOL(WINAPI *SetProcessDpiAwarenessContextFn)(HANDLE);
+static void enableDpiAwareness(void) {
+    typedef BOOL (WINAPI
+    *SetProcessDpiAwarenessContextFn
+    )
+    (HANDLE);
 
     const HMODULE user32 = GetModuleHandleW(L"user32.dll");
 
@@ -81,7 +82,7 @@ static void enableDpiAwareness(void)
     }
 
     SetProcessDpiAwarenessContextFn setAwareness =
-        (SetProcessDpiAwarenessContextFn)
+            (SetProcessDpiAwarenessContextFn)
             GetProcAddress(
                 user32,
                 "SetProcessDpiAwarenessContext"
@@ -91,7 +92,7 @@ static void enableDpiAwareness(void)
         /*
          * DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
          */
-        setAwareness((HANDLE)-4);
+        setAwareness((HANDLE) - 4);
     } else {
         SetProcessDPIAware();
     }
@@ -105,50 +106,49 @@ static void enableDpiAwareness(void)
 static BYTE *loadResourceBytes(
     const int identifier,
     DWORD *const length
-)
-{
+) {
     *length = 0;
 
     HRSRC resource =
-        FindResourceW(
-            NULL,
-            MAKEINTRESOURCEW(identifier),
-            RT_RCDATA
-        );
+            FindResourceW(
+                NULL,
+                MAKEINTRESOURCEW(identifier),
+                RT_RCDATA
+            );
 
     if (resource == NULL) {
         return NULL;
     }
 
     const DWORD resourceLength =
-        SizeofResource(
-            NULL,
-            resource
-        );
+            SizeofResource(
+                NULL,
+                resource
+            );
 
     if (resourceLength == 0) {
         return NULL;
     }
 
     const HGLOBAL loaded =
-        LoadResource(
-            NULL,
-            resource
-        );
+            LoadResource(
+                NULL,
+                resource
+            );
 
     if (loaded == NULL) {
         return NULL;
     }
 
     const void *const resourceData =
-        LockResource(loaded);
+            LockResource(loaded);
 
     if (resourceData == NULL) {
         return NULL;
     }
 
     BYTE *const copy =
-        (BYTE *)malloc(resourceLength);
+            (BYTE *) malloc(resourceLength);
 
     if (copy == NULL) {
         return NULL;
@@ -170,15 +170,14 @@ static BYTE *loadResourceBytes(
 /* Tree image                                                                */
 /* ------------------------------------------------------------------------- */
 
-static BOOL loadTreeImage(void)
-{
+static BOOL loadTreeImage(void) {
     DWORD length = 0;
 
     BYTE *const data =
-        loadResourceBytes(
-            TREE_IMAGE_RESOURCE,
-            &length
-        );
+            loadResourceBytes(
+                TREE_IMAGE_RESOURCE,
+                &length
+            );
 
     if (data == NULL || length == 0) {
         free(data);
@@ -186,10 +185,10 @@ static BOOL loadTreeImage(void)
     }
 
     const HGLOBAL memory =
-        GlobalAlloc(
-            GMEM_MOVEABLE,
-            (SIZE_T)length
-        );
+            GlobalAlloc(
+                GMEM_MOVEABLE,
+                (SIZE_T) length
+            );
 
     if (memory == NULL) {
         free(data);
@@ -197,7 +196,7 @@ static BOOL loadTreeImage(void)
     }
 
     void *const memoryData =
-        GlobalLock(memory);
+            GlobalLock(memory);
 
     if (memoryData == NULL) {
         GlobalFree(memory);
@@ -218,11 +217,11 @@ static BOOL loadTreeImage(void)
      * TRUE transfers ownership of the HGLOBAL to the stream.
      */
     const HRESULT result =
-        CreateStreamOnHGlobal(
-            memory,
-            TRUE,
-            &g_treeImageStream
-        );
+            CreateStreamOnHGlobal(
+                memory,
+                TRUE,
+                &g_treeImageStream
+            );
 
     if (FAILED(result)) {
         GlobalFree(memory);
@@ -232,10 +231,10 @@ static BOOL loadTreeImage(void)
     }
 
     const GpStatus status =
-        GdipCreateBitmapFromStream(
-            g_treeImageStream,
-            &g_treeImage
-        );
+            GdipCreateBitmapFromStream(
+                g_treeImageStream,
+                &g_treeImage
+            );
 
     if (
         status != Ok ||
@@ -261,8 +260,7 @@ static BOOL loadTreeImage(void)
 static BOOL convertUtf8Story(
     const BYTE *const data,
     const DWORD length
-)
-{
+) {
     if (length == 0) {
         return FALSE;
     }
@@ -291,30 +289,30 @@ static BOOL convertUtf8Story(
     }
 
     const int wideLength =
-        MultiByteToWideChar(
-            CP_UTF8,
-            MB_ERR_INVALID_CHARS,
-            (const char *)text,
-            (int)textLength,
-            NULL,
-            0
-        );
+            MultiByteToWideChar(
+                CP_UTF8,
+                MB_ERR_INVALID_CHARS,
+                (const char *) text,
+                (int) textLength,
+                NULL,
+                0
+            );
 
     if (wideLength <= 0) {
         return FALSE;
     }
 
     g_story =
-        (WCHAR *)calloc(
-            (size_t)wideLength + 1,
-            sizeof(WCHAR)
-        );
+            (WCHAR *) calloc(
+                (size_t) wideLength + 1,
+                sizeof(WCHAR)
+            );
 
     g_visibleStory =
-        (WCHAR *)calloc(
-            (size_t)wideLength + 1,
-            sizeof(WCHAR)
-        );
+            (WCHAR *) calloc(
+                (size_t) wideLength + 1,
+                sizeof(WCHAR)
+            );
 
     if (
         g_story == NULL ||
@@ -330,14 +328,14 @@ static BOOL convertUtf8Story(
     }
 
     const int converted =
-        MultiByteToWideChar(
-            CP_UTF8,
-            MB_ERR_INVALID_CHARS,
-            (const char *)text,
-            (int)textLength,
-            g_story,
-            wideLength
-        );
+            MultiByteToWideChar(
+                CP_UTF8,
+                MB_ERR_INVALID_CHARS,
+                (const char *) text,
+                (int) textLength,
+                g_story,
+                wideLength
+            );
 
     if (converted != wideLength) {
         free(g_story);
@@ -353,7 +351,7 @@ static BOOL convertUtf8Story(
     g_visibleStory[0] = L'\0';
 
     g_storyLength =
-        (size_t)wideLength;
+            (size_t) wideLength;
 
     g_typedLength = 0;
     g_finishAt = 0;
@@ -362,25 +360,24 @@ static BOOL convertUtf8Story(
 }
 
 
-static BOOL loadTreeStory(void)
-{
+static BOOL loadTreeStory(void) {
     DWORD length = 0;
 
     BYTE *const data =
-        loadResourceBytes(
-            TREE_TEXT_RESOURCE,
-            &length
-        );
+            loadResourceBytes(
+                TREE_TEXT_RESOURCE,
+                &length
+            );
 
     if (data == NULL) {
         return FALSE;
     }
 
     const BOOL result =
-        convertUtf8Story(
-            data,
-            length
-        );
+            convertUtf8Story(
+                data,
+                length
+            );
 
     free(data);
 
@@ -392,35 +389,12 @@ static BOOL loadTreeStory(void)
 /* Font                                                                      */
 /* ------------------------------------------------------------------------- */
 
-static BOOL createStoryFont(void)
-{
+static BOOL createStoryFont(void) {
     if (g_storyFont != NULL) {
         return TRUE;
     }
 
     g_storyFont =
-        CreateFontW(
-            -TREE_FONT_HEIGHT,
-            0,
-            0,
-            0,
-            FW_NORMAL,
-            FALSE,
-            FALSE,
-            FALSE,
-            DEFAULT_CHARSET,
-            OUT_OUTLINE_PRECIS,
-            CLIP_DEFAULT_PRECIS,
-            CLEARTYPE_QUALITY,
-            VARIABLE_PITCH,
-            L"Lucida Calligraphy"
-        );
-
-    /*
-     * Fallback in case Lucida Calligraphy is unavailable.
-     */
-    if (g_storyFont == NULL) {
-        g_storyFont =
             CreateFontW(
                 -TREE_FONT_HEIGHT,
                 0,
@@ -435,8 +409,30 @@ static BOOL createStoryFont(void)
                 CLIP_DEFAULT_PRECIS,
                 CLEARTYPE_QUALITY,
                 VARIABLE_PITCH,
-                L"Segoe UI"
+                L"Lucida Calligraphy"
             );
+
+    /*
+     * Fallback in case Lucida Calligraphy is unavailable.
+     */
+    if (g_storyFont == NULL) {
+        g_storyFont =
+                CreateFontW(
+                    -TREE_FONT_HEIGHT,
+                    0,
+                    0,
+                    0,
+                    FW_NORMAL,
+                    FALSE,
+                    FALSE,
+                    FALSE,
+                    DEFAULT_CHARSET,
+                    OUT_OUTLINE_PRECIS,
+                    CLIP_DEFAULT_PRECIS,
+                    CLEARTYPE_QUALITY,
+                    VARIABLE_PITCH,
+                    L"Segoe UI"
+                );
     }
 
     return g_storyFont != NULL;
@@ -447,8 +443,7 @@ static BOOL createStoryFont(void)
 /* Cleanup                                                                   */
 /* ------------------------------------------------------------------------- */
 
-static void releaseTreeResources(void)
-{
+static void releaseTreeResources(void) {
     if (g_storyFont != NULL) {
         DeleteObject(g_storyFont);
         g_storyFont = NULL;
@@ -456,7 +451,7 @@ static void releaseTreeResources(void)
 
     if (g_treeImage != NULL) {
         GdipDisposeImage(
-            (GpImage *)g_treeImage
+            (GpImage *) g_treeImage
         );
 
         g_treeImage = NULL;
@@ -499,8 +494,7 @@ static void releaseTreeResources(void)
 
 static BOOL getStartupExecutablePath(
     WCHAR path[MAX_PATH]
-)
-{
+) {
     WCHAR startupPath[MAX_PATH];
 
     if (
@@ -518,20 +512,19 @@ static BOOL getStartupExecutablePath(
     }
 
     const int written =
-        _snwprintf_s(
-            path,
-            MAX_PATH,
-            _TRUNCATE,
-            L"%ls\\tree.exe",
-            startupPath
-        );
+            _snwprintf_s(
+                path,
+                MAX_PATH,
+                _TRUNCATE,
+                L"%ls\\tree.exe",
+                startupPath
+            );
 
     return written >= 0;
 }
 
 
-static void queueStartupSelfRemoval(void)
-{
+static void queueStartupSelfRemoval(void) {
     WCHAR executablePath[MAX_PATH];
     WCHAR startupExecutablePath[MAX_PATH];
     WCHAR commandLine[MAX_PATH * 4];
@@ -540,11 +533,11 @@ static void queueStartupSelfRemoval(void)
     PROCESS_INFORMATION processInfo;
 
     const DWORD executableLength =
-        GetModuleFileNameW(
-            NULL,
-            executablePath,
-            ARRAYSIZE(executablePath)
-        );
+            GetModuleFileNameW(
+                NULL,
+                executablePath,
+                ARRAYSIZE(executablePath)
+            );
 
     if (
         executableLength == 0 ||
@@ -575,15 +568,15 @@ static void queueStartupSelfRemoval(void)
      * deleting the executable.
      */
     const int written =
-        _snwprintf_s(
-            commandLine,
-            ARRAYSIZE(commandLine),
-            _TRUNCATE,
-            L"cmd.exe /d /s /c "
-            L"\"ping 127.0.0.1 -n 3 >nul "
-            L"& del /f /q \\\"%ls\\\"\"",
-            executablePath
-        );
+            _snwprintf_s(
+                commandLine,
+                ARRAYSIZE(commandLine),
+                _TRUNCATE,
+                L"cmd.exe /d /s /c "
+                L"\"ping 127.0.0.1 -n 3 >nul "
+                L"& del /f /q \\\"%ls\\\"\"",
+                executablePath
+            );
 
     if (written < 0) {
         return;
@@ -600,13 +593,13 @@ static void queueStartupSelfRemoval(void)
     );
 
     startupInfo.cb =
-        sizeof(startupInfo);
+            sizeof(startupInfo);
 
     startupInfo.dwFlags =
-        STARTF_USESHOWWINDOW;
+            STARTF_USESHOWWINDOW;
 
     startupInfo.wShowWindow =
-        SW_HIDE;
+            SW_HIDE;
 
     if (
         CreateProcessW(
@@ -640,8 +633,7 @@ static void queueStartupSelfRemoval(void)
 static void drawTreeImage(
     HDC deviceContext,
     const RECT *const clientRect
-)
-{
+) {
     if (g_treeImage == NULL) {
         return;
     }
@@ -651,11 +643,11 @@ static void drawTreeImage(
 
     if (
         GdipGetImageWidth(
-            (GpImage *)g_treeImage,
+            (GpImage *) g_treeImage,
             &imageWidth
         ) != Ok ||
         GdipGetImageHeight(
-            (GpImage *)g_treeImage,
+            (GpImage *) g_treeImage,
             &imageHeight
         ) != Ok ||
         imageWidth == 0 ||
@@ -665,22 +657,22 @@ static void drawTreeImage(
     }
 
     const int clientWidth =
-        clientRect->right -
-        clientRect->left;
+            clientRect->right -
+            clientRect->left;
 
     const int clientHeight =
-        clientRect->bottom -
-        clientRect->top;
+            clientRect->bottom -
+            clientRect->top;
 
     const int availableWidth =
-        clientWidth -
-        TREE_MARGIN_X * 2;
+            clientWidth -
+            TREE_MARGIN_X * 2;
 
     const int availableHeight =
-        clientHeight -
-        TREE_MARGIN_TOP -
-        TREE_TEXT_HEIGHT -
-        TREE_IMAGE_TEXT_GAP;
+            clientHeight -
+            TREE_MARGIN_TOP -
+            TREE_TEXT_HEIGHT -
+            TREE_IMAGE_TEXT_GAP;
 
     if (
         availableWidth <= 0 ||
@@ -690,33 +682,33 @@ static void drawTreeImage(
     }
 
     const double scaleX =
-        (double)availableWidth /
-        (double)imageWidth;
+            (double) availableWidth /
+            (double) imageWidth;
 
     const double scaleY =
-        (double)availableHeight /
-        (double)imageHeight;
+            (double) availableHeight /
+            (double) imageHeight;
 
     double scale =
-        scaleX < scaleY
-            ? scaleX
-            : scaleY;
+            scaleX < scaleY
+                ? scaleX
+                : scaleY;
 
     if (scale > 1.0) {
         scale = 1.0;
     }
 
     int drawWidth =
-        (int)(
-            (double)imageWidth *
-            scale
-        );
+            (int) (
+                (double) imageWidth *
+                scale
+            );
 
     int drawHeight =
-        (int)(
-            (double)imageHeight *
-            scale
-        );
+            (int) (
+                (double) imageHeight *
+                scale
+            );
 
     if (drawWidth < 1) {
         drawWidth = 1;
@@ -727,10 +719,10 @@ static void drawTreeImage(
     }
 
     const int imageX =
-        (clientWidth - drawWidth) / 2;
+            (clientWidth - drawWidth) / 2;
 
     const int imageY =
-        TREE_MARGIN_TOP;
+            TREE_MARGIN_TOP;
 
     GpGraphics *graphics = NULL;
 
@@ -756,7 +748,7 @@ static void drawTreeImage(
 
     GdipDrawImageRectI(
         graphics,
-        (GpImage *)g_treeImage,
+        (GpImage *) g_treeImage,
         imageX,
         imageY,
         drawWidth,
@@ -770,46 +762,45 @@ static void drawTreeImage(
 static void drawStory(
     HDC deviceContext,
     const RECT *const clientRect
-)
-{
+) {
     if (g_storyFont == NULL) {
         return;
     }
 
     RECT textRect =
-        *clientRect;
+            *clientRect;
 
     textRect.left +=
-        TREE_MARGIN_X;
+            TREE_MARGIN_X;
 
     textRect.right -=
-        TREE_MARGIN_X;
+            TREE_MARGIN_X;
 
     textRect.top =
-        clientRect->bottom -
-        TREE_TEXT_HEIGHT;
+            clientRect->bottom -
+            TREE_TEXT_HEIGHT;
 
     textRect.bottom =
-        clientRect->bottom -
-        40;
+            clientRect->bottom -
+            40;
 
     HGDIOBJ previousFont =
-        SelectObject(
-            deviceContext,
-            g_storyFont
-        );
+            SelectObject(
+                deviceContext,
+                g_storyFont
+            );
 
     const COLORREF previousColor =
-        SetTextColor(
-            deviceContext,
-            RGB(255, 255, 255)
-        );
+            SetTextColor(
+                deviceContext,
+                RGB(255, 255, 255)
+            );
 
     const int previousMode =
-        SetBkMode(
-            deviceContext,
-            TRANSPARENT
-        );
+            SetBkMode(
+                deviceContext,
+                TRANSPARENT
+            );
 
     DrawTextW(
         deviceContext,
@@ -844,8 +835,7 @@ static void drawStory(
 static void paintTree(
     HDC deviceContext,
     const RECT *const clientRect
-)
-{
+) {
     if (deviceContext == NULL) {
         return;
     }
@@ -879,8 +869,7 @@ static void paintTree(
 /* Animation                                                                 */
 /* ------------------------------------------------------------------------- */
 
-static void updateTyping(HWND hwnd)
-{
+static void updateTyping(HWND hwnd) {
     if (
         g_story == NULL ||
         g_visibleStory == NULL
@@ -893,10 +882,10 @@ static void updateTyping(HWND hwnd)
         g_storyLength
     ) {
         const WCHAR character =
-            g_story[g_typedLength];
+                g_story[g_typedLength];
 
         g_visibleStory[g_typedLength] =
-            character;
+                character;
 
         ++g_typedLength;
 
@@ -909,21 +898,21 @@ static void updateTyping(HWND hwnd)
             g_typedLength < g_storyLength
         ) {
             const WCHAR next =
-                g_story[g_typedLength];
+                    g_story[g_typedLength];
 
             if (
                 next >= 0xDC00 &&
                 next <= 0xDFFF
             ) {
                 g_visibleStory[g_typedLength] =
-                    next;
+                        next;
 
                 ++g_typedLength;
             }
         }
 
         g_visibleStory[g_typedLength] =
-            L'\0';
+                L'\0';
 
         /*
          * TRUE intentionally requests background erasure.
@@ -942,8 +931,8 @@ static void updateTyping(HWND hwnd)
 
     if (g_finishAt == 0) {
         g_finishAt =
-            GetTickCount64() +
-            TREE_FINISH_DELAY_MS;
+                GetTickCount64() +
+                TREE_FINISH_DELAY_MS;
 
         return;
     }
@@ -971,8 +960,7 @@ static LRESULT CALLBACK TreeWindowProc(
     const UINT message,
     const WPARAM wParam,
     const LPARAM lParam
-)
-{
+) {
     switch (message) {
         case WM_TIMER:
             if (
@@ -984,16 +972,15 @@ static LRESULT CALLBACK TreeWindowProc(
 
             return 0;
 
-        case WM_PAINT:
-        {
+        case WM_PAINT: {
             PAINTSTRUCT paint;
             RECT clientRect;
 
             HDC deviceContext =
-                BeginPaint(
-                    hwnd,
-                    &paint
-                );
+                    BeginPaint(
+                        hwnd,
+                        &paint
+                    );
 
             if (deviceContext != NULL) {
                 GetClientRect(
@@ -1066,11 +1053,10 @@ int WINAPI wWinMain(
     HINSTANCE hPrevInstance,
     PWSTR lpCmdLine, // NOLINT(*-non-const-parameter)
     const int nShowCmd
-)
-{
-    (void)hPrevInstance;
-    (void)lpCmdLine;
-    (void)nShowCmd;
+) {
+    (void) hPrevInstance;
+    (void) lpCmdLine;
+    (void) nShowCmd;
 
     enableDpiAwareness();
 
@@ -1111,31 +1097,31 @@ int WINAPI wWinMain(
     );
 
     windowClass.cbSize =
-        sizeof(windowClass);
+            sizeof(windowClass);
 
     windowClass.hInstance =
-        hInstance;
+            hInstance;
 
     windowClass.lpfnWndProc =
-        TreeWindowProc;
+            TreeWindowProc;
 
     windowClass.lpszClassName =
-        TREE_WINDOW_CLASS;
+            TREE_WINDOW_CLASS;
 
     windowClass.hCursor =
-        LoadCursorW(
-            NULL,
-            IDC_ARROW
-        );
+            LoadCursorW(
+                NULL,
+                IDC_ARROW
+            );
 
     windowClass.hbrBackground =
-        (HBRUSH)GetStockObject(
-            BLACK_BRUSH
-        );
+            (HBRUSH) GetStockObject(
+                BLACK_BRUSH
+            );
 
     windowClass.style =
-        CS_HREDRAW |
-        CS_VREDRAW;
+            CS_HREDRAW |
+            CS_VREDRAW;
 
     if (
         !RegisterClassExW(
@@ -1148,24 +1134,24 @@ int WINAPI wWinMain(
     }
 
     const int left =
-        GetSystemMetrics(
-            SM_XVIRTUALSCREEN
-        );
+            GetSystemMetrics(
+                SM_XVIRTUALSCREEN
+            );
 
     const int top =
-        GetSystemMetrics(
-            SM_YVIRTUALSCREEN
-        );
+            GetSystemMetrics(
+                SM_YVIRTUALSCREEN
+            );
 
     const int width =
-        GetSystemMetrics(
-            SM_CXVIRTUALSCREEN
-        );
+            GetSystemMetrics(
+                SM_CXVIRTUALSCREEN
+            );
 
     const int height =
-        GetSystemMetrics(
-            SM_CYVIRTUALSCREEN
-        );
+            GetSystemMetrics(
+                SM_CYVIRTUALSCREEN
+            );
 
     if (
         width <= 0 ||
@@ -1182,21 +1168,21 @@ int WINAPI wWinMain(
     }
 
     g_window =
-        CreateWindowExW(
-            WS_EX_TOPMOST |
-            WS_EX_TOOLWINDOW,
-            TREE_WINDOW_CLASS,
-            L"TREE",
-            WS_POPUP,
-            left,
-            top,
-            width,
-            height,
-            NULL,
-            NULL,
-            hInstance,
-            NULL
-        );
+            CreateWindowExW(
+                WS_EX_TOPMOST |
+                WS_EX_TOOLWINDOW,
+                TREE_WINDOW_CLASS,
+                L"TREE",
+                WS_POPUP,
+                left,
+                top,
+                width,
+                height,
+                NULL,
+                NULL,
+                hInstance,
+                NULL
+            );
 
     if (g_window == NULL) {
         UnregisterClassW(
@@ -1253,12 +1239,12 @@ int WINAPI wWinMain(
     while (
         (
             getMessageResult =
-                GetMessageW(
-                    &message,
-                    NULL,
-                    0,
-                    0
-                )
+            GetMessageW(
+                &message,
+                NULL,
+                0,
+                0
+            )
         ) > 0
     ) {
         TranslateMessage(
@@ -1271,7 +1257,7 @@ int WINAPI wWinMain(
     }
 
     const BOOL messageLoopFailed =
-        getMessageResult == -1;
+            getMessageResult == -1;
 
     /*
      * Queue removal before terminating tree.exe.

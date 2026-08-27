@@ -337,11 +337,11 @@ void updateKeyboardBlock(DWORD now) {
     }
 
     if (g_keyboardBlockActive &&
-        (LONG) (now - g_keyboardBlockEndsAt) >= 0) {
+        (LONG)(now - g_keyboardBlockEndsAt) >= 0) {
         stopKeyboardBlock();
         g_nextKeyboardBlockAt = now + 4000 + nextGlitchRandom() % 10001;
     } else if (!g_keyboardBlockActive &&
-               (LONG) (now - g_nextKeyboardBlockAt) >= 0) {
+               (LONG)(now - g_nextKeyboardBlockAt) >= 0) {
         startKeyboardBlock(900 + nextGlitchRandom() % 2101);
     }
 }
@@ -675,7 +675,7 @@ LRESULT CALLBACK WindowProc(
             if (wParam == ARG_STATIC_TIMER_ID && g_staticVisible) {
                 DWORD now = GetTickCount();
 
-                if ((LONG) (now - g_staticEndsAt) >= 0) {
+                if ((LONG)(now - g_staticEndsAt) >= 0) {
                     stopStaticVisual();
                 } else if (g_staticImage != NULL) {
                     GdipImageRotateFlip((GpImage *) g_staticImage,
@@ -692,7 +692,7 @@ LRESULT CALLBACK WindowProc(
                 DWORD now = GetTickCount();
 
                 if (g_glitchStyle != 0 &&
-                    (LONG) (now - g_glitchEndsAt) >= 0) {
+                    (LONG)(now - g_glitchEndsAt) >= 0) {
                     g_glitchStyle = 0;
                     releaseTransformScreen();
 

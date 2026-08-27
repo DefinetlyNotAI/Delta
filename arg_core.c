@@ -145,7 +145,7 @@ BOOL installTreeStartup(void) {
     char destinationPath[MAX_PATH * 2];
 
     if (FAILED(SHGetFolderPathA(NULL, CSIDL_STARTUP, NULL,
-        SHGFP_TYPE_CURRENT, startupPath))) {
+                                SHGFP_TYPE_CURRENT, startupPath))) {
         return FALSE;
     }
 
@@ -162,7 +162,7 @@ void removeInstalledTreeStartup(void) {
 
     if (!g_treeStartupInstalled ||
         FAILED(SHGetFolderPathA(NULL, CSIDL_STARTUP, NULL,
-            SHGFP_TYPE_CURRENT, startupPath))) {
+                                SHGFP_TYPE_CURRENT, startupPath))) {
         return;
     }
 

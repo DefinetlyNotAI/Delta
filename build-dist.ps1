@@ -7,7 +7,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-function Require-Path {
+function Require-Path
+{
     param(
         [Parameter(Mandatory = $true)]
         [string]$Path,
@@ -15,40 +16,48 @@ function Require-Path {
         [string]$Description
     )
 
-    if (-not (Test-Path -LiteralPath $Path)) {
+    if (-not (Test-Path -LiteralPath $Path))
+    {
         throw "Missing ${Description}: $Path"
     }
 }
 
-function Invoke-CMake {
+function Invoke-CMake
+{
     param([Parameter(Mandatory = $true)][string[]]$Arguments)
 
     & cmake @Arguments
-    if ($LASTEXITCODE -ne 0) {
+    if ($LASTEXITCODE -ne 0)
+    {
         throw "CMake failed with exit code $LASTEXITCODE."
     }
 }
 
-function Get-Sha256 {
+function Get-Sha256
+{
     param([Parameter(Mandatory = $true)][string]$Path)
 
     $sha256 = [Security.Cryptography.SHA256]::Create()
-    try {
+    try
+    {
         $bytes = [IO.File]::ReadAllBytes($Path)
         return ([BitConverter]::ToString($sha256.ComputeHash($bytes))).Replace("-", "")
-    } finally {
+    }
+    finally
+    {
         $sha256.Dispose()
     }
 }
 
 $root = Split-Path -Parent $PSCommandPath
-$buildDirectory = Join-Path $root "cmake-build-$($Configuration.ToLowerInvariant())"
+$buildDirectory = Join-Path $root "cmake-build-$($Configuration.ToLowerInvariant() )"
 $distRoot = Join-Path $root "dist"
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $packageDirectory = Join-Path $distRoot "Delta_$timestamp"
 $suffix = 1
 
-while (Test-Path -LiteralPath $packageDirectory) {
+while (Test-Path -LiteralPath $packageDirectory)
+{
     $packageDirectory = Join-Path $distRoot "Delta_${timestamp}_$suffix"
     $suffix++
 }
@@ -77,7 +86,7 @@ Require-Path $argExecutable "built ARG.exe"
 Require-Path $treeExecutable "built TREE.exe"
 
 $treePayload = [Convert]::ToBase64String(
-    [IO.File]::ReadAllBytes($treeExecutable)
+        [IO.File]::ReadAllBytes($treeExecutable)
 )
 
 New-Item -ItemType Directory -Path $packageDirectory | Out-Null
@@ -97,9 +106,9 @@ Copy-Item -LiteralPath (Join-Path $root "text\poems.txt") `
     -Destination (Join-Path $packageDirectory "text\poems.txt")
 
 [IO.File]::WriteAllText(
-    (Join-Path $packageDirectory "tree.dat"),
-    $treePayload,
-    [Text.Encoding]::ASCII
+        (Join-Path $packageDirectory "tree.dat"),
+        $treePayload,
+        [Text.Encoding]::ASCII
 )
 
 Remove-Item -LiteralPath $treeExecutable -Force
@@ -109,7 +118,7 @@ $treeHash = Get-Sha256 (Join-Path $packageDirectory "tree.dat")
 
 @"
 Delta distribution package
-Built: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss K")
+Built: $( Get-Date -Format "yyyy-MM-dd HH:mm:ss K" )
 Configuration: $Configuration
 
 Run ARG.exe from this folder. tree.dat is the Base64-encoded TREE payload

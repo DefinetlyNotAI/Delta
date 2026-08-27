@@ -170,14 +170,19 @@ int WINAPI WinMain(
             updateKeyboardBlock(currentTime);
 
             if (g_mouseInversionAllowed && g_mouseInversionActive &&
-                (LONG) (currentTime - g_mouseInversionEndsAt) >= 0) {
+
+                (LONG)(currentTime - g_mouseInversionEndsAt) >= 0
+            )
+            {
                 stopMouseInversion();
                 g_nextMouseInversionAt =
                         currentTime + 4000 +
                         nextGlitchRandom() % 10001;
-            } else if (g_mouseInversionAllowed && !g_mouseInversionActive &&
-                       (LONG) (currentTime -
-                               g_nextMouseInversionAt) >= 0) {
+            }
+            else
+            if (g_mouseInversionAllowed && !g_mouseInversionActive &&
+                (LONG)(currentTime -
+                       g_nextMouseInversionAt) >= 0) {
                 startMouseInversion(
                     1200 + nextGlitchRandom() % 2801
                 );
@@ -197,15 +202,15 @@ int WINAPI WinMain(
 
             if (g_mouseInversionAllowed) {
                 if (g_mouseInversionActive &&
-                    (LONG) (currentTime -
-                            g_mouseInversionEndsAt) >= 0) {
+                    (LONG)(currentTime -
+                           g_mouseInversionEndsAt) >= 0) {
                     stopMouseInversion();
                     g_nextMouseInversionAt =
                             currentTime + 4000 +
                             nextGlitchRandom() % 10001;
                 } else if (!g_mouseInversionActive &&
-                           (LONG) (currentTime -
-                                   g_nextMouseInversionAt) >= 0) {
+                           (LONG)(currentTime -
+                                  g_nextMouseInversionAt) >= 0) {
                     startMouseInversion(
                         1200 + nextGlitchRandom() % 2801
                     );

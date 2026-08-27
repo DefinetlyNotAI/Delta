@@ -20,6 +20,7 @@
 #define ARG_GLITCH_TIMER_ID 1002
 #define ARG_TEXT_TIMER_ID 1003
 #define ARG_STATIC_TIMER_ID 1004
+#define ARG_STEP6_COMPLETE_MESSAGE (WM_APP + 1)
 #define ARG_MAX_TEXT_PROCESSES 25
 #define ARG_MAX_POEMS 16
 #define ARG_RESERVED_POEMS 8
@@ -111,7 +112,6 @@ extern BOOL g_wallpaperChanged;
 extern BOOL g_originalWallpaperCaptured;
 extern char g_originalWallpaper[MAX_PATH];
 extern BOOL g_step6Active;
-extern BOOL g_step6Complete;
 extern int g_step6BlockedClicks;
 extern HRGN g_smileRegion;
 extern HFONT g_smileFont;

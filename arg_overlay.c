@@ -1461,9 +1461,13 @@ LRESULT CALLBACK WindowProc(
                     7) {
                     stopStep6();
 
-                    g_step6Complete =
-                            TRUE;
-                }
+                    PostMessageA(
+                        hwnd,
+                        ARG_STEP6_COMPLETE_MESSAGE,
+                        0,
+                        0
+                    );
+                    }
             }
 
             return 0;

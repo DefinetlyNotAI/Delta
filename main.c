@@ -108,13 +108,20 @@ int WINAPI WinMain(
                 PM_REMOVE
             )
         ) {
-            if (message.message ==
-                WM_QUIT) {
+            if (message.message == WM_QUIT) {
                 g_shutdownRequested =
                         TRUE;
 
                 break;
             }
+
+            if (message.message ==
+                ARG_STEP6_COMPLETE_MESSAGE) {
+                phase =
+                        STEP_7_PENDING;
+
+                continue;
+                }
 
             TranslateMessage(
                 &message
@@ -237,8 +244,6 @@ int WINAPI WinMain(
             }
         } else if (phase == STEP_5_COMPLETE) {
             phase = startStep6() ? STEP_6 : STEP_7_PENDING;
-        } else if (phase == STEP_6 && g_step6Complete) {
-            phase = STEP_7_PENDING;
         } else if (phase == STEP_7_PENDING) {
             char musicPath[MAX_PATH * 2];
 

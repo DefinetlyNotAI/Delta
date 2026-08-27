@@ -42,7 +42,6 @@ BOOL g_wallpaperChanged = FALSE;
 BOOL g_originalWallpaperCaptured = FALSE;
 char g_originalWallpaper[MAX_PATH] = {0};
 BOOL g_step6Active = FALSE;
-BOOL g_step6Complete = FALSE;
 int g_step6BlockedClicks = 0;
 HRGN g_smileRegion = NULL;
 HFONT g_smileFont = NULL;

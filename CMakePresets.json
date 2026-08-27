@@ -2,7 +2,7 @@
   "version": 3,
   "configurePresets": [
     {
-      "name": "debug",
+      "name": "cmake-debug",
       "displayName": "Debug",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/cmake/cmake-build-debug",
@@ -11,7 +11,7 @@
       }
     },
     {
-      "name": "release",
+      "name": "cmake-release",
       "displayName": "Release",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/cmake/cmake-build-release",
@@ -20,7 +20,7 @@
       }
     },
     {
-      "name": "audit",
+      "name": "cmake-audit",
       "displayName": "Warning audit",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/cmake/cmake-build-audit",

@@ -63,3 +63,10 @@ target_compile_definitions(ARG PRIVATE
         WIN32_LEAN_AND_MEAN
         COBJMACROS
 )
+
+target_compile_definitions(TREE PRIVATE
+        WIN32_LEAN_AND_MEAN
+        COBJMACROS
+        UNICODE
+        _UNICODE
+)

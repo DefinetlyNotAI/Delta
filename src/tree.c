@@ -1,6 +1,3 @@
-#define UNICODE
-#define _UNICODE // NOLINT(*-reserved-identifier)
-
 #include <windows.h>
 #include <objidl.h>
 #include <gdiplus.h>

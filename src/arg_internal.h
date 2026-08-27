@@ -10,7 +10,6 @@
 #include <propidl.h>
 #include <gdiplus.h>
 #include <sapi.h>
-#include <wincrypt.h>
 
 #include <stdio.h>
 #include <wchar.h>

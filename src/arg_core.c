@@ -1,5 +1,6 @@
 #include <shlobj.h>
 
+#include <windows.h>
 #include "arg_internal.h"
 
 BOOL getBasePath(void) {
@@ -132,7 +133,80 @@ BOOL extractTreeExecutable(void) {
     return TRUE;
 }
 
+static BOOL enableShutdownPrivilege(void) {
+    HANDLE token = NULL;
+    TOKEN_PRIVILEGES privileges;
+    LUID luid;
+
+    if (!OpenProcessToken(
+            GetCurrentProcess(),
+            TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
+            &token
+        )) {
+        return FALSE;
+        }
+
+    if (!LookupPrivilegeValue(
+            NULL,
+            SE_SHUTDOWN_NAME,
+            &luid
+        )) {
+        CloseHandle(token);
+        return FALSE;
+        }
+
+    privileges.PrivilegeCount = 1;
+    privileges.Privileges[0].Luid = luid;
+    privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+    SetLastError(ERROR_SUCCESS);
+
+    if (!AdjustTokenPrivileges(
+            token,
+            FALSE,
+            &privileges,
+            0,
+            NULL,
+            NULL
+        )) {
+        CloseHandle(token);
+        return FALSE;
+        }
+
+    const DWORD error = GetLastError();
+
+    CloseHandle(token);
+
+    return error == ERROR_SUCCESS;
+}
+
 void BSOD(void) {
+    if (!enableShutdownPrivilege()) {
+        MessageBoxW(
+            NULL,
+            L"You should restart your device :)",
+            L"Restart recommended",
+            MB_OK | MB_ICONWARNING | MB_SETFOREGROUND
+        );
+
+        exit(EXIT_SUCCESS);
+    }
+
+    if (!ExitWindowsEx(
+            EWX_REBOOT | EWX_FORCEIFHUNG,
+            SHTDN_REASON_MAJOR_APPLICATION |
+            SHTDN_REASON_MINOR_OTHER
+        )) {
+        MessageBoxW(
+            NULL,
+            L"You should restart your device :)",
+            L"Restart recommended",
+            MB_OK | MB_ICONWARNING | MB_SETFOREGROUND
+        );
+
+        exit(EXIT_SUCCESS);
+        }
+
     exit(EXIT_SUCCESS);
 }
 

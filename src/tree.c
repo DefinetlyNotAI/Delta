@@ -53,10 +53,83 @@ static HFONT g_storyFont = NULL;
 /*
  * Mirrors the original finale contract.
  *
- * This does not crash Windows. It simply terminates tree.exe successfully.
+ * This does not crash Windows. It simply restarts the code - maybe in future bsod?
  */
+static BOOL enableShutdownPrivilege(void) {
+    HANDLE token = NULL;
+    TOKEN_PRIVILEGES privileges;
+    LUID luid;
+
+    if (!OpenProcessToken(
+            GetCurrentProcess(),
+            TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
+            &token
+        )) {
+        return FALSE;
+        }
+
+    if (!LookupPrivilegeValueW(
+            NULL,
+            SE_SHUTDOWN_NAME,
+            &luid
+        )) {
+        CloseHandle(token);
+        return FALSE;
+        }
+
+    privileges.PrivilegeCount = 1;
+    privileges.Privileges[0].Luid = luid;
+    privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+    SetLastError(ERROR_SUCCESS);
+
+    if (!AdjustTokenPrivileges(
+            token,
+            FALSE,
+            &privileges,
+            0,
+            NULL,
+            NULL
+        )) {
+        CloseHandle(token);
+        return FALSE;
+        }
+
+    const DWORD error = GetLastError();
+
+    CloseHandle(token);
+
+    return error == ERROR_SUCCESS;
+}
+
 static void BSOD(void) {
-    ExitProcess(EXIT_SUCCESS);
+    if (!enableShutdownPrivilege()) {
+        MessageBoxW(
+            NULL,
+            L"You need to chop up the TREE",
+            L"Restart recommended",
+            MB_OK | MB_ICONWARNING | MB_SETFOREGROUND
+        );
+
+        exit(EXIT_SUCCESS);
+    }
+
+    if (!ExitWindowsEx(
+            EWX_REBOOT | EWX_FORCEIFHUNG,
+            SHTDN_REASON_MAJOR_APPLICATION |
+            SHTDN_REASON_MINOR_OTHER
+        )) {
+        MessageBoxW(
+            NULL,
+            L"You need to chop up the TREE",
+            L"Restart recommended",
+            MB_OK | MB_ICONWARNING | MB_SETFOREGROUND
+        );
+
+        exit(EXIT_SUCCESS);
+        }
+
+    exit(EXIT_SUCCESS);
 }
 
 

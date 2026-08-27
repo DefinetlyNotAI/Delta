@@ -176,7 +176,7 @@ void createGarbageText(
         }
     }
 
-    int length = 48 + nextGlitchRandom() % 65;
+    int length = 48 + (int)(nextGlitchRandom() % 65U);
 
     for (int index = 0; index < length; index++) {
         wchar_t character;
@@ -530,7 +530,8 @@ void reservePoems(void) {
     }
 
     for (int index = g_poemCount - 1; index > 0; index--) {
-        int swapIndex = nextGlitchRandom() % (index + 1);
+        int swapIndex =
+                (int)(nextGlitchRandom() % (unsigned int)(index + 1));
         int value = order[index];
 
         order[index] = order[swapIndex];
@@ -552,23 +553,32 @@ DWORD WINAPI ttsThread(
 ) {
     (void) parameter;
 
-    if (FAILED(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED))) {
+    DWORD result = ERROR_SUCCESS;
+
+    HRESULT hr = CoInitializeEx(
+        NULL,
+        COINIT_APARTMENTTHREADED
+    );
+
+    if (FAILED(hr)) {
         g_ttsComplete = TRUE;
-        return 0;
+        return (DWORD) hr;
     }
 
     ISpVoice *voice = NULL;
 
-    if (FAILED(CoCreateInstance(
+    hr = CoCreateInstance(
         &CLSID_SpVoice,
         NULL,
         CLSCTX_ALL,
         &IID_ISpVoice,
         (void **) &voice
-    ))) {
+    );
+
+    if (FAILED(hr)) {
         CoUninitialize();
         g_ttsComplete = TRUE;
-        return 0;
+        return (DWORD) hr;
     }
 
     EnterCriticalSection(&g_ttsLock);
@@ -580,6 +590,7 @@ DWORD WINAPI ttsThread(
          !g_shutdownRequested;
          index++) {
         const char *poem = g_poems[g_ttsPoems[index]];
+
         int length = MultiByteToWideChar(
             CP_UTF8,
             0,
@@ -599,24 +610,34 @@ DWORD WINAPI ttsThread(
         );
 
         if (widePoem == NULL) {
+            result = ERROR_OUTOFMEMORY;
             continue;
         }
 
-        MultiByteToWideChar(
-            CP_UTF8,
-            0,
-            poem,
-            -1,
-            widePoem,
-            length
-        );
+        if (MultiByteToWideChar(
+                CP_UTF8,
+                0,
+                poem,
+                -1,
+                widePoem,
+                length
+            ) <= 0) {
+            free(widePoem);
+            continue;
+        }
 
-        voice->lpVtbl->Speak(
+        hr = voice->lpVtbl->Speak(
             voice,
             widePoem,
             SPF_ASYNC,
             NULL
         );
+
+        if (FAILED(hr)) {
+            result = (DWORD) hr;
+            free(widePoem);
+            break;
+        }
 
         while (!g_shutdownRequested &&
                voice->lpVtbl->WaitUntilDone(
@@ -627,9 +648,9 @@ DWORD WINAPI ttsThread(
 
         free(widePoem);
 
-        /* Keep each poem distinct without ever blocking the UI message loop. */
         if (index + 1 < ARG_RESERVED_POEMS) {
-            DWORD pauseEndsAt = GetTickCount() + 1200;
+            DWORD pauseEndsAt =
+                    GetTickCount() + 1200;
 
             while (!g_shutdownRequested &&
                    (LONG)(GetTickCount() - pauseEndsAt) < 0) {
@@ -644,9 +665,10 @@ DWORD WINAPI ttsThread(
 
     voice->lpVtbl->Release(voice);
     CoUninitialize();
+
     g_ttsComplete = TRUE;
 
-    return 0;
+    return result;
 }
 
 void startTts(void) {
@@ -677,12 +699,16 @@ void stopTts(void) {
     EnterCriticalSection(&g_ttsLock);
 
     if (g_ttsVoice != NULL) {
-        g_ttsVoice->lpVtbl->Speak(
+        HRESULT hr = g_ttsVoice->lpVtbl->Speak(
             g_ttsVoice,
             NULL,
             SPF_PURGEBEFORESPEAK,
             NULL
         );
+
+        if (FAILED(hr)) {
+            /* Nothing further to purge if SAPI rejected the request. */
+        }
     }
 
     LeaveCriticalSection(&g_ttsLock);
@@ -693,27 +719,55 @@ DWORD WINAPI step6SpeechThread(
 ) {
     (void) parameter;
 
-    if (FAILED(CoInitializeEx(NULL, COINIT_APARTMENTTHREADED))) {
-        MessageBoxA(NULL, "You can't smile there, try again.",
-                    "ARG information", MB_OK | MB_ICONINFORMATION);
-        return 0;
+    HRESULT hr = CoInitializeEx(
+        NULL,
+        COINIT_APARTMENTTHREADED
+    );
+
+    if (FAILED(hr)) {
+        MessageBoxA(
+            NULL,
+            "You can't smile there, try again.",
+            "ARG information",
+            MB_OK | MB_ICONINFORMATION
+        );
+
+        return (DWORD) hr;
     }
 
     ISpVoice *voice = NULL;
 
-    if (FAILED(CoCreateInstance(&CLSID_SpVoice, NULL, CLSCTX_ALL,
-                                &IID_ISpVoice, (void **) &voice))) {
-        MessageBoxA(NULL, "You can't smile there, try again.",
-                    "ARG information", MB_OK | MB_ICONINFORMATION);
-    } else {
-        voice->lpVtbl->Speak(voice,
-                             L"You can't smile there, try again.",
-                             SPF_DEFAULT, NULL);
-        voice->lpVtbl->Release(voice);
+    hr = CoCreateInstance(
+        &CLSID_SpVoice,
+        NULL,
+        CLSCTX_ALL,
+        &IID_ISpVoice,
+        (void **) &voice
+    );
+
+    if (FAILED(hr)) {
+        MessageBoxA(
+            NULL,
+            "You can't smile there, try again.",
+            "ARG information",
+            MB_OK | MB_ICONINFORMATION
+        );
+
+        CoUninitialize();
+        return (DWORD) hr;
     }
 
+    hr = voice->lpVtbl->Speak(
+        voice,
+        L"You can't smile there, try again.",
+        SPF_DEFAULT,
+        NULL
+    );
+
+    voice->lpVtbl->Release(voice);
     CoUninitialize();
-    return 0;
+
+    return FAILED(hr) ? (DWORD) hr : ERROR_SUCCESS;
 }
 
 void sayStep6Warning(void) {

@@ -37,8 +37,8 @@ Requirements:
 Configure and build:
 
 ```powershell
-cmake -S . -B cmake-build-debug
-cmake --build cmake-build-debug
+cmake --preset debug
+cmake --build cmake/cmake-build-debug
 ```
 
 The build produces `ARG.exe` and `TREE.exe`.
@@ -53,7 +53,7 @@ Use the included PowerShell builder from the repository root:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\build-dist.ps1 -Configuration Release
+.\cli\build.ps1 -Configuration Release
 ```
 
 The script:
@@ -77,20 +77,21 @@ expects `tree.dat` and validates the decoded executable before installing it.
 Delta_<timestamp>/
 ├── ARG.exe
 ├── tree.dat                 # Base64-encoded TREE executable
-├── img/
-│   ├── static.jpg
-│   ├── countdown/
-│   │   └── 0.png ... 5.png
-│   └── creep/
-├── mus/
-│   ├── static.mp3
-│   ├── undoitall.mp3
-│   └── whisper.mp3
-└── text/
-    └── poems.txt
+└── assets/
+    ├── img/
+    │   ├── static.jpg
+    │   ├── countdown/
+    │   │   └── 0.png ... 5.png
+    │   └── creep/
+    ├── mus/
+    │   ├── static.mp3
+    │   ├── undoitall.mp3
+    │   └── whisper.mp3
+    └── text/
+        └── poems.txt
 ```
 
-TREE embeds `img/tree/tree.jpg` and `text/tree.txt` as Windows resources.
+TREE embeds `assets/img/tree/tree.jpg` and `assets/text/tree.txt` as Windows resources.
 Those two source assets therefore do not need to exist beside the installed
 Startup copy.
 
@@ -100,8 +101,8 @@ Startup copy.
 |-------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | 1     | Random ambient static, whisper, and generated-machine audio events.                                                                                                            |
 | 2     | Timed visual glitches, color/noise blocks, screen inversion, and display-only rotation transforms.                                                                             |
-| 3a    | Program-owned CMD/Notepad-style windows type corrupted text.                                                                                                                   |
-| 3b    | Eight reserved poem blocks from `text/poems.txt` are displayed in program-owned text windows.                                                                                  |
+| 3a    | Actual CMD, PowerShell, and Notepad windows type corrupted text.                                                                                                               |
+| 3b    | Eight reserved poem blocks from `assets/text/poems.txt` are displayed in actual text hosts.                                                                                   |
 | 4     | Eight separately reserved poem blocks are spoken through local SAPI TTS; consented mouse inversion and keyboard blocking occur only briefly.                                   |
 | 5     | Consent-gated Calculator, Paint, Notepad, Edge InPrivate, and local read-only command windows are created and split by the overlay.                                            |
 | 6     | A black click-filter overlay exposes two transparent `:)` regions; seven blocked clicks advance the experience.                                                                |
@@ -141,7 +142,7 @@ It provides these exact special wallpaper sequences:
 Every wallpaper transition plays a 50 ms static overlay. Countdown images 5
 through 0 are displayed for one second each with 100 ms static.
 
-Ambient static audio also paints `img/static.jpg` through the program overlay
+Ambient static audio also paints `assets/img/static.jpg` through the program overlay
 and rotates it 180 degrees on the static timer.
 
 Before the countdown, `ARG.exe`:
@@ -169,22 +170,11 @@ translation unit.
 
 | File                | Purpose                                                                                                                                                     |
 |---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `main.c`            | ARG entry point, Windows message loop, stage timing, and overall experience progression.                                                                    |
-| `state.h`           | Shared ARG constants, runtime types, global state declarations, and internal subsystem interfaces.                                                          |
-| `arg_state.c`       | Definitions and initialization for shared ARG runtime state.                                                                                                |
-| `arg_core.c`        | Core runtime utilities, consent/session handling, TREE extraction and Startup handoff, and cleanup coordination.                                            |
-| `arg_audio.c`       | MCI playback, static/whisper audio, generated machine audio, and ambient audio-worker lifecycle.                                                            |
-| `arg_overlay.c`     | Main overlay window, visual glitches, static rendering, wallpaper handling, mouse inversion, keyboard effects, and related rendering/input state.           |
-| `arg_text.c`        | Program-owned text windows, child-process tracking, poem loading/reservation, SAPI TTS, random text, and related text behavior.                             |
-| `arg_step7.c`       | Step 7 wallpaper scheduler, reminder windows, countdown, and finale-specific sequencing.                                                                    |
-| `tree.c`            | Standalone TREE finale. Loads embedded resources, creates its fullscreen Win32 window, performs timer-driven typing, and handles Startup-only self-removal. |
-| `tree.rc`           | Embeds the TREE image and story as `RCDATA` resources.                                                                                                      |
-| `tree.dat`          | Base64-encoded TREE payload consumed by ARG; regenerate it with `build-dist.ps1`.                                                                           |
-| `build-dist.ps1`    | Reproducible timestamped package builder.                                                                                                                   |
+| `src/`              | All C sources and headers, including the ARG subsystems and TREE resource script.                                                                            |
+| `tree.dat`          | Base64-encoded TREE payload consumed by ARG; regenerate it with `cli/build.ps1`.                                                                            |
+| `cli/build.ps1`     | Reproducible timestamped package builder.                                                                                                                   |
 | `CMakeLists.txt`    | Builds the `ARG` and `TREE` Win32 targets and declares their system-library dependencies.                                                                   |
-| `text/poems.txt`    | Main-stage poem source; must provide at least 16 usable blocks: 8 for display and 8 for TTS.                                                                |
-| `text/tree.txt`     | TREE story source embedded at TREE build time.                                                                                                              |
-| `img/tree/tree.jpg` | TREE image embedded into `TREE.exe` at build time.                                                                                                          |
+| `assets/`           | Runtime audio, image, and text assets.                                                                                                                      |
 
 ### Runtime ownership
 
@@ -206,7 +196,7 @@ required image and story are embedded directly in its executable.
 
 ## Poem contract
 
-`text/poems.txt` must contain at least **16 usable poem blocks**.
+`assets/text/poems.txt` must contain at least **16 usable poem blocks**.
 
 The ARG runtime reserves them as two independent groups:
 
@@ -227,16 +217,16 @@ cannot be initialized completely.
 Do not rename or omit these runtime paths without changing the corresponding
 code and distribution builder:
 
-- `img/static.jpg`
-- `img/creep/`
-- `img/countdown/0.png` through `5.png`
-- `mus/static.mp3`
-- `mus/undoitall.mp3`
-- `mus/whisper.mp3`
-- `text/poems.txt`
+- `assets/img/static.jpg`
+- `assets/img/creep/`
+- `assets/img/countdown/0.png` through `5.png`
+- `assets/mus/static.mp3`
+- `assets/mus/undoitall.mp3`
+- `assets/mus/whisper.mp3`
+- `assets/text/poems.txt`
 - `tree.dat`
 
-The `img/creep/` directory must include every regular wallpaper used by Step 7
+The `assets/img/creep/` directory must include every regular wallpaper used by Step 7
 and the complete special sequences:
 
 ```text
@@ -248,9 +238,9 @@ thisisgreen1.webp ... thisisgreen4.webp
 For TREE source builds, also keep:
 
 ```text
-img/tree/tree.jpg
-text/tree.txt
-tree.rc
+assets/img/tree/tree.jpg
+assets/text/tree.txt
+src/tree.rc
 ```
 
 Rebuild TREE after changing either embedded asset so the updated resource is
@@ -309,22 +299,21 @@ Useful checks:
 
 ```powershell
 # Configure
-cmake -S . -B cmake-build-debug
+cmake --preset debug
 
 # Normal build
-cmake --build cmake-build-debug
+cmake --build cmake/cmake-build-debug
 
 # Strict compiler audit (MinGW/GCC)
-cmake -S . -B cmake-build-audit -DCMAKE_BUILD_TYPE=Debug `
-  '-DCMAKE_C_FLAGS=-Wall -Wextra -Wpedantic -Werror'
+cmake --preset audit
 
-cmake --build cmake-build-audit
+cmake --build cmake/cmake-build-audit
 
 # Whitespace errors
 git diff --check
 
 # Package release
-.\build-dist.ps1 -Configuration Release
+.\cli\build.ps1 -Configuration Release
 ```
 
 A clean strict build is particularly useful after changing shared declarations
@@ -340,11 +329,11 @@ validating the experience on a disposable test environment.
 
 | Symptom                              | Check                                                                                                                                                        |
 |--------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `tree.dat` is rejected               | Re-run `build-dist.ps1`; confirm it is beside `ARG.exe` and was not copied through a text editor that modified the Base64 data.                              |
+| `tree.dat` is rejected               | Re-run `cli/build.ps1`; confirm it is beside `ARG.exe` and was not copied through a text editor that modified the Base64 data.                               |
 | Wallpapers do not change             | Confirm the countdown/creep assets are present and Windows allows wallpaper changes. ARG preserves the current wallpaper before its first successful change. |
-| Poems fail to initialize             | Confirm `text/poems.txt` contains at least 16 non-empty poem blocks separated by blank lines.                                                                |
+| Poems fail to initialize             | Confirm `assets/text/poems.txt` contains at least 16 non-empty poem blocks separated by blank lines.                                                         |
 | An optional effect does not run      | Verify it was accepted in its consent dialog; all optional effects default to No.                                                                            |
-| TREE cannot load its image/story     | Rebuild TREE after restoring `img/tree/tree.jpg` and `text/tree.txt`; both are embedded at compile time.                                                     |
+| TREE cannot load its image/story     | Rebuild TREE after restoring `assets/img/tree/tree.jpg` and `assets/text/tree.txt`; both are embedded at compile time.                                      |
 | Build cannot find GDI+ headers       | Use a Windows-oriented compiler/toolchain with the Windows SDK or MinGW-w64 headers and libraries installed.                                                 |
 | TREE unexpectedly remains in Startup | Confirm TREE reached normal cleanup and that the running copy is exactly the current-user Startup `tree.exe`.                                                |
 | Finale audio stops unexpectedly      | Rebuild from the refactored source; the ambient worker must be stopped and joined before Step 7 assumes control of finale audio.                             |

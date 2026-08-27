@@ -49,8 +49,8 @@ function Get-Sha256
     }
 }
 
-$root = Split-Path -Parent $PSCommandPath
-$buildDirectory = Join-Path $root "cmake-build-$($Configuration.ToLowerInvariant() )"
+$root = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
+$buildDirectory = Join-Path $root "cmake\cmake-build-$($Configuration.ToLowerInvariant() )"
 $distRoot = Join-Path $root "dist"
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $packageDirectory = Join-Path $distRoot "Delta_$timestamp"
@@ -63,11 +63,11 @@ while (Test-Path -LiteralPath $packageDirectory)
 }
 
 Require-Path (Join-Path $root "CMakeLists.txt") "CMake project"
-Require-Path (Join-Path $root "img\creep") "creep image directory"
-Require-Path (Join-Path $root "img\countdown") "countdown image directory"
-Require-Path (Join-Path $root "img\static.jpg") "static image"
-Require-Path (Join-Path $root "mus") "audio directory"
-Require-Path (Join-Path $root "text\poems.txt") "poem text"
+Require-Path (Join-Path $root "assets\img\creep") "creep image directory"
+Require-Path (Join-Path $root "assets\img\countdown") "countdown image directory"
+Require-Path (Join-Path $root "assets\img\static.jpg") "static image"
+Require-Path (Join-Path $root "assets\mus") "audio directory"
+Require-Path (Join-Path $root "assets\text\poems.txt") "poem text"
 
 Invoke-CMake -Arguments @(
     "-S", $root,
@@ -90,20 +90,21 @@ $treePayload = [Convert]::ToBase64String(
 )
 
 New-Item -ItemType Directory -Path $packageDirectory | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $packageDirectory "img") | Out-Null
-New-Item -ItemType Directory -Path (Join-Path $packageDirectory "text") | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $packageDirectory "assets") | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $packageDirectory "assets\img") | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $packageDirectory "assets\text") | Out-Null
 
 Copy-Item -LiteralPath $argExecutable -Destination $packageDirectory
-Copy-Item -LiteralPath (Join-Path $root "img\creep") `
-    -Destination (Join-Path $packageDirectory "img") -Recurse
-Copy-Item -LiteralPath (Join-Path $root "img\countdown") `
-    -Destination (Join-Path $packageDirectory "img") -Recurse
-Copy-Item -LiteralPath (Join-Path $root "img\static.jpg") `
-    -Destination (Join-Path $packageDirectory "img\static.jpg")
-Copy-Item -LiteralPath (Join-Path $root "mus") `
-    -Destination (Join-Path $packageDirectory "mus") -Recurse
-Copy-Item -LiteralPath (Join-Path $root "text\poems.txt") `
-    -Destination (Join-Path $packageDirectory "text\poems.txt")
+Copy-Item -LiteralPath (Join-Path $root "assets\img\creep") `
+    -Destination (Join-Path $packageDirectory "assets\img") -Recurse
+Copy-Item -LiteralPath (Join-Path $root "assets\img\countdown") `
+    -Destination (Join-Path $packageDirectory "assets\img") -Recurse
+Copy-Item -LiteralPath (Join-Path $root "assets\img\static.jpg") `
+    -Destination (Join-Path $packageDirectory "assets\img\static.jpg")
+Copy-Item -LiteralPath (Join-Path $root "assets\mus") `
+    -Destination (Join-Path $packageDirectory "assets\mus") -Recurse
+Copy-Item -LiteralPath (Join-Path $root "assets\text\poems.txt") `
+    -Destination (Join-Path $packageDirectory "assets\text\poems.txt")
 
 [IO.File]::WriteAllText(
         (Join-Path $packageDirectory "tree.dat"),

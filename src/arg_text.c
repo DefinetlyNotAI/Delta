@@ -217,48 +217,51 @@ BOOL startTextProcess(
 
     TextProcess *textProcess =
             &g_textProcesses[g_textProcessCount];
-    const wchar_t *prompt = L"";
-    int left = GetSystemMetrics(SM_XVIRTUALSCREEN);
-    int top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    const wchar_t *commandLine = L"notepad.exe";
+    STARTUPINFOW startupInfo;
+    PROCESS_INFORMATION processInfo;
+    wchar_t mutableCommandLine[128];
 
     ZeroMemory(textProcess, sizeof(*textProcess));
 
-    /*
-     * A native edit window is program-owned and always accepts WM_CHAR.
-     * External terminal and Notepad hosts can delegate their UI to another
-     * process, which made reliable typing and safe cleanup impossible.
-     */
-    HWND textWindow = CreateWindowExW(
-        WS_EX_TOOLWINDOW,
-        L"EDIT",
-        L"",
-        WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_VSCROLL |
-        ES_MULTILINE | ES_AUTOVSCROLL,
-        left + 80 + (g_textProcessCount % 3) * 48,
-        top + 80 + (g_textProcessCount % 3) * 48,
-        720,
-        420,
-        NULL,
-        NULL,
-        GetModuleHandleW(NULL),
-        NULL
-    );
+    if (host == TEXT_HOST_CMD) {
+        commandLine = L"cmd.exe /d /k";
+    } else if (host == TEXT_HOST_POWERSHELL) {
+        commandLine = L"powershell.exe -NoLogo -NoExit";
+    }
 
-    if (textWindow == NULL) {
+    ZeroMemory(&startupInfo, sizeof(startupInfo));
+    ZeroMemory(&processInfo, sizeof(processInfo));
+
+    startupInfo.cb = sizeof(startupInfo);
+
+    wcsncpy(
+        mutableCommandLine,
+        commandLine,
+        sizeof(mutableCommandLine) / sizeof(mutableCommandLine[0]) - 1
+    );
+    mutableCommandLine[
+        sizeof(mutableCommandLine) / sizeof(mutableCommandLine[0]) - 1
+    ] = L'\0';
+
+    if (!CreateProcessW(
+            NULL,
+            mutableCommandLine,
+            NULL,
+            NULL,
+            FALSE,
+            0,
+            NULL,
+            NULL,
+            &startupInfo,
+            &processInfo
+        )) {
         return FALSE;
     }
 
-    if (host == TEXT_HOST_CMD) {
-        prompt = L"Microsoft Windows [ARG session]\r\nC:\\> ";
-    } else if (host == TEXT_HOST_POWERSHELL) {
-        prompt = L"Windows PowerShell [ARG session]\r\nPS C:\\> ";
-    }
-
-    SendMessageW(textWindow, WM_SETFONT,
-                 (WPARAM) GetStockObject(ANSI_FIXED_FONT), TRUE);
-    SetWindowTextW(textWindow, prompt);
-    SendMessageW(textWindow, EM_SETSEL, (WPARAM) - 1, (LPARAM) - 1);
-    textProcess->window = textWindow;
+    CloseHandle(processInfo.hThread);
+    textProcess->process = processInfo.hProcess;
+    textProcess->processId = processInfo.dwProcessId;
     textProcess->host = host;
     textProcess->autoType = TRUE;
     textProcess->startedAt = GetTickCount();
@@ -473,7 +476,7 @@ BOOL loadPoems(void) {
     snprintf(
         path,
         sizeof(path),
-        "%s\\text\\poems.txt",
+        "%s\\assets\\text\\poems.txt",
         g_basePath
     );
 

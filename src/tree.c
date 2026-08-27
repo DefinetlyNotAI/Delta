@@ -81,18 +81,21 @@ static void enableDpiAwareness(void) {
         return;
     }
 
-    SetProcessDpiAwarenessContextFn setAwareness =
-            (SetProcessDpiAwarenessContextFn)
-            GetProcAddress(
-                user32,
-                "SetProcessDpiAwarenessContext"
-            );
+    union {
+        FARPROC procedure;
+        SetProcessDpiAwarenessContextFn setAwareness;
+    } dpiProcedure;
 
-    if (setAwareness != NULL) {
+    dpiProcedure.procedure = GetProcAddress(
+        user32,
+        "SetProcessDpiAwarenessContext"
+    );
+
+    if (dpiProcedure.setAwareness != NULL) {
         /*
          * DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
          */
-        setAwareness((HANDLE) - 4);
+        dpiProcedure.setAwareness((HANDLE) - 4);
     } else {
         SetProcessDPIAware();
     }
@@ -801,6 +804,39 @@ static void drawStory(
                 deviceContext,
                 TRANSPARENT
             );
+
+    RECT measuredRect = textRect;
+
+    measuredRect.top = 0;
+    measuredRect.bottom = 0;
+
+    DrawTextW(
+        deviceContext,
+        g_visibleStory != NULL
+            ? g_visibleStory
+            : L"",
+        -1,
+        &measuredRect,
+        DT_WORDBREAK |
+        DT_CENTER |
+        DT_TOP |
+        DT_NOPREFIX |
+        DT_CALCRECT
+    );
+
+    const int visibleHeight =
+            textRect.bottom -
+            textRect.top;
+
+    const int storyHeight =
+            measuredRect.bottom -
+            measuredRect.top;
+
+    if (storyHeight > visibleHeight) {
+        textRect.top =
+                textRect.bottom -
+                storyHeight;
+    }
 
     DrawTextW(
         deviceContext,

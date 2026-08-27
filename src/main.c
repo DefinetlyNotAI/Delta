@@ -253,7 +253,7 @@ int WINAPI WinMain(
                 g_treeStartupInstalled = TRUE;
             }
             snprintf(musicPath, sizeof(musicPath),
-                     "%s\\mus\\undoitall.mp3", g_basePath);
+                     "%s\\assets\\mus\\undoitall.mp3", g_basePath);
             playMP3(musicPath, 600);
             startStep7(now);
             phaseEndsAt = now + 227000;

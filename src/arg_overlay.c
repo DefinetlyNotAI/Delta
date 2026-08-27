@@ -119,6 +119,22 @@ BOOL captureTransformScreen(void) {
     return TRUE;
 }
 
+/* Keep transformed effects live rather than displaying one captured frame. */
+static BOOL refreshTransformScreen(HWND hwnd) {
+    SetLayeredWindowAttributes(hwnd, 0, 0, LWA_ALPHA);
+
+    const BOOL captured = captureTransformScreen();
+
+    SetLayeredWindowAttributes(
+        hwnd,
+        0,
+        captured ? 255 : 72,
+        LWA_ALPHA
+    );
+
+    return captured;
+}
+
 BOOL loadStaticImage(void) {
     char imagePath[MAX_PATH * 2];
     wchar_t widePath[MAX_PATH * 2];
@@ -149,7 +165,7 @@ BOOL loadStaticImage(void) {
     snprintf(
         imagePath,
         sizeof(imagePath),
-        "%s\\img\\static.jpg",
+        "%s\\assets\\img\\static.jpg",
         g_basePath
     );
 
@@ -296,7 +312,7 @@ void playStaticOverlayFor(
     snprintf(
         path,
         sizeof(path),
-        "%s\\mus\\static.mp3",
+        "%s\\assets\\mus\\static.mp3",
         g_basePath
     );
 
@@ -1388,7 +1404,7 @@ LRESULT CALLBACK WindowProc(
                             2201U;
 
                     if (g_glitchStyle >= 5 &&
-                        !captureTransformScreen()) {
+                        !refreshTransformScreen(hwnd)) {
                         g_glitchStyle = 1;
                     }
 
@@ -1398,6 +1414,17 @@ LRESULT CALLBACK WindowProc(
                         g_glitchStyle >= 5
                             ? 255
                             : 72,
+                        LWA_ALPHA
+                    );
+                }
+
+                if (g_glitchStyle >= 5 &&
+                    !refreshTransformScreen(hwnd)) {
+                    g_glitchStyle = 1;
+                    SetLayeredWindowAttributes(
+                        hwnd,
+                        0,
+                        72,
                         LWA_ALPHA
                     );
                 }

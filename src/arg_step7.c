@@ -1,21 +1,21 @@
 #include "arg_internal.h"
 
 static const char *g_step7RegularWallpapers[] = {
-    "img\\creep\\everythingg2.png",
-    "img\\creep\\everythingg3.png",
-    "img\\creep\\everythingg4.png",
-    "img\\creep\\everythingg5.png",
-    "img\\creep\\everythingg6.png",
-    "img\\creep\\clownguy.webp",
-    "img\\creep\\artpicture.webp",
-    "img\\creep\\dream.jpeg",
-    "img\\creep\\colorbars.png",
-    "img\\creep\\worldlol.jpg",
-    "img\\creep\\ohno.png",
-    "img\\creep\\notclean.webp",
-    "img\\creep\\mm7.webp",
-    "img\\creep\\somethinglikethis.webp",
-    "img\\creep\\white.png"
+    "assets\\img\\creep\\everythingg2.png",
+    "assets\\img\\creep\\everythingg3.png",
+    "assets\\img\\creep\\everythingg4.png",
+    "assets\\img\\creep\\everythingg5.png",
+    "assets\\img\\creep\\everythingg6.png",
+    "assets\\img\\creep\\clownguy.webp",
+    "assets\\img\\creep\\artpicture.webp",
+    "assets\\img\\creep\\dream.jpeg",
+    "assets\\img\\creep\\colorbars.png",
+    "assets\\img\\creep\\worldlol.jpg",
+    "assets\\img\\creep\\ohno.png",
+    "assets\\img\\creep\\notclean.webp",
+    "assets\\img\\creep\\mm7.webp",
+    "assets\\img\\creep\\somethinglikethis.webp",
+    "assets\\img\\creep\\white.png"
 };
 
 DWORD step7RandomWallpaperDelay(void) {
@@ -28,19 +28,19 @@ void step7ShowWallpaperFrame(void) {
     switch (g_step7.wallpaperMode) {
         case STEP7_WALLPAPER_HAPPY:
             snprintf(relativePath, sizeof(relativePath),
-                     "img\\creep\\happy%u.png",
+                     "assets\\img\\creep\\happy%u.png",
                      g_step7.wallpaperFrame % 9 + 1);
             break;
 
         case STEP7_WALLPAPER_HT:
             snprintf(relativePath, sizeof(relativePath),
-                     "img\\creep\\ht%u.png",
+                     "assets\\img\\creep\\ht%u.png",
                      g_step7.wallpaperFrame % 4 + 1);
             break;
 
         case STEP7_WALLPAPER_GREEN:
             snprintf(relativePath, sizeof(relativePath),
-                     "img\\creep\\thisisgreen%u.webp",
+                     "assets\\img\\creep\\thisisgreen%u.webp",
                      g_step7.wallpaperFrame % 4 + 1);
             break;
 
@@ -149,7 +149,7 @@ void startStep7(ULONGLONG now) {
 void startStep7Countdown(ULONGLONG now) {
     g_step7.countdown = 5;
     g_step7.nextCountdownAt = now + 1000;
-    setWallpaperFile("img\\countdown\\5.png");
+    setWallpaperFile("assets\\img\\countdown\\5.png");
     playStaticOverlayFor(100);
 }
 
@@ -165,7 +165,7 @@ BOOL updateStep7Countdown(ULONGLONG now) {
     }
 
     g_step7.countdown--;
-    snprintf(relativePath, sizeof(relativePath), "img\\countdown\\%d.png",
+    snprintf(relativePath, sizeof(relativePath), "assets\\img\\countdown\\%d.png",
              g_step7.countdown);
     setWallpaperFile(relativePath);
     playStaticOverlayFor(100);

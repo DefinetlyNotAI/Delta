@@ -119,7 +119,7 @@ void playStatic(void) {
     snprintf(
         path,
         sizeof(path),
-        "%s\\mus\\static.mp3",
+        "%s\\assets\\mus\\static.mp3",
         g_basePath
     );
 
@@ -158,7 +158,7 @@ void playWhisper(void) {
     snprintf(
         path,
         sizeof(path),
-        "%s\\mus\\whisper.mp3",
+        "%s\\assets\\mus\\whisper.mp3",
         g_basePath
     );
 

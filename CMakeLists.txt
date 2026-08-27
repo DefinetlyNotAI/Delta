@@ -7,14 +7,14 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
 add_executable(ARG WIN32
-        state.h
-        main.c
-        arg_state.c
-        arg_core.c
-        arg_audio.c
-        arg_overlay.c
-        arg_text.c
-        arg_step7.c
+        src/state.h
+        src/main.c
+        src/arg_state.c
+        src/arg_core.c
+        src/arg_audio.c
+        src/arg_overlay.c
+        src/arg_text.c
+        src/arg_step7.c
 )
 
 target_link_libraries(ARG PRIVATE
@@ -27,8 +27,8 @@ target_link_libraries(ARG PRIVATE
 )
 
 add_executable(TREE WIN32
-        tree.c
-        tree.rc
+        src/tree.c
+        src/tree.rc
 )
 
 target_link_libraries(TREE PRIVATE
@@ -36,6 +36,11 @@ target_link_libraries(TREE PRIVATE
         shell32
         gdiplus
 )
+
+if (NOT MSVC)
+    # MinGW needs this to select wWinMain for the Unicode GUI entry point.
+    target_link_options(TREE PRIVATE -municode)
+endif ()
 
 foreach (target ARG TREE)
     target_compile_features(${target} PRIVATE c_std_11)

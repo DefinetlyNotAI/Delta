@@ -37,7 +37,7 @@ Requirements:
 Configure and build:
 
 ```powershell
-cmake --preset debug
+cmake --preset cmake-debug
 cmake --build cmake/cmake-build-debug
 ```
 
@@ -102,7 +102,7 @@ Startup copy.
 | 1     | Random ambient static, whisper, and generated-machine audio events.                                                                                                            |
 | 2     | Timed visual glitches, color/noise blocks, screen inversion, and display-only rotation transforms.                                                                             |
 | 3a    | Actual CMD, PowerShell, and Notepad windows type corrupted text.                                                                                                               |
-| 3b    | Eight reserved poem blocks from `assets/text/poems.txt` are displayed in actual text hosts.                                                                                   |
+| 3b    | Eight reserved poem blocks from `assets/text/poems.txt` are displayed in actual text hosts.                                                                                    |
 | 4     | Eight separately reserved poem blocks are spoken through local SAPI TTS; consented mouse inversion and keyboard blocking occur only briefly.                                   |
 | 5     | Consent-gated Calculator, Paint, Notepad, Edge InPrivate, and local read-only command windows are created and split by the overlay.                                            |
 | 6     | A black click-filter overlay exposes two transparent `:)` regions; seven blocked clicks advance the experience.                                                                |
@@ -168,13 +168,13 @@ development copy elsewhere does not cause that copy to be deleted.
 The main ARG runtime is split by subsystem rather than maintained as one large
 translation unit.
 
-| File                | Purpose                                                                                                                                                     |
-|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `src/`              | All C sources and headers, including the ARG subsystems and TREE resource script.                                                                            |
-| `tree.dat`          | Base64-encoded TREE payload consumed by ARG; regenerate it with `cli/build.ps1`.                                                                            |
-| `cli/build.ps1`     | Reproducible timestamped package builder.                                                                                                                   |
-| `CMakeLists.txt`    | Builds the `ARG` and `TREE` Win32 targets and declares their system-library dependencies.                                                                   |
-| `assets/`           | Runtime audio, image, and text assets.                                                                                                                      |
+| File             | Purpose                                                                                   |
+|------------------|-------------------------------------------------------------------------------------------|
+| `src/`           | All C sources and headers, including the ARG subsystems and TREE resource script.         |
+| `tree.dat`       | Base64-encoded TREE payload consumed by ARG; regenerate it with `cli/build.ps1`.          |
+| `cli/build.ps1`  | Reproducible timestamped package builder.                                                 |
+| `CMakeLists.txt` | Builds the `ARG` and `TREE` Win32 targets and declares their system-library dependencies. |
+| `assets/`        | Runtime audio, image, and text assets.                                                    |
 
 ### Runtime ownership
 
@@ -299,13 +299,13 @@ Useful checks:
 
 ```powershell
 # Configure
-cmake --preset debug
+cmake --preset cmake-debug
 
 # Normal build
 cmake --build cmake/cmake-build-debug
 
 # Strict compiler audit (MinGW/GCC)
-cmake --preset audit
+cmake --preset cmake-audit
 
 cmake --build cmake/cmake-build-audit
 
@@ -333,7 +333,7 @@ validating the experience on a disposable test environment.
 | Wallpapers do not change             | Confirm the countdown/creep assets are present and Windows allows wallpaper changes. ARG preserves the current wallpaper before its first successful change. |
 | Poems fail to initialize             | Confirm `assets/text/poems.txt` contains at least 16 non-empty poem blocks separated by blank lines.                                                         |
 | An optional effect does not run      | Verify it was accepted in its consent dialog; all optional effects default to No.                                                                            |
-| TREE cannot load its image/story     | Rebuild TREE after restoring `assets/img/tree/tree.jpg` and `assets/text/tree.txt`; both are embedded at compile time.                                      |
+| TREE cannot load its image/story     | Rebuild TREE after restoring `assets/img/tree/tree.jpg` and `assets/text/tree.txt`; both are embedded at compile time.                                       |
 | Build cannot find GDI+ headers       | Use a Windows-oriented compiler/toolchain with the Windows SDK or MinGW-w64 headers and libraries installed.                                                 |
 | TREE unexpectedly remains in Startup | Confirm TREE reached normal cleanup and that the running copy is exactly the current-user Startup `tree.exe`.                                                |
 | Finale audio stops unexpectedly      | Rebuild from the refactored source; the ambient worker must be stopped and joined before Step 7 assumes control of finale audio.                             |

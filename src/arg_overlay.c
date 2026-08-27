@@ -407,11 +407,11 @@ LRESULT CALLBACK mouseHookProc(
                 g_lastMousePosition.y;
 
         POINT inverted = {
-            g_lastMousePosition.x -
-            deltaX,
+            .x = g_lastMousePosition.x -
+                 deltaX,
 
-            g_lastMousePosition.y -
-            deltaY
+            .y = g_lastMousePosition.y -
+                 deltaY
         };
 
         int left =
@@ -1051,16 +1051,16 @@ void paintGlitch(
         } else if (g_glitchStyle == 6) {
             POINT points[] = {
                 {
-                    (LONG) width,
-                    (LONG) height
+                    .x = (LONG) width,
+                    .y = (LONG) height
                 },
                 {
-                    0,
-                    (LONG) height
+                    .x = 0,
+                    .y = (LONG) height
                 },
                 {
-                    (LONG) width,
-                    0
+                    .x = (LONG) width,
+                    .y = 0
                 }
             };
 
@@ -1079,16 +1079,16 @@ void paintGlitch(
         } else {
             POINT points[] = {
                 {
-                    (LONG) width,
-                    0
+                    .x = (LONG) width,
+                    .y = 0
                 },
                 {
-                    (LONG) width,
-                    (LONG) height
+                    .x = (LONG) width,
+                    .y = (LONG) height
                 },
                 {
-                    0,
-                    0
+                    .x = 0,
+                    .y = 0
                 }
             };
 
@@ -1116,17 +1116,17 @@ void paintGlitch(
 
     if (g_splitOverlayActive) {
         RECT vertical = {
-            (LONG)(width / 2 - 6),
-            0,
-            (LONG)(width / 2 + 6),
-            (LONG) height
+            .left = (LONG)(width / 2 - 6),
+            .top = 0,
+            .right = (LONG)(width / 2 + 6),
+            .bottom = (LONG) height
         };
 
         RECT horizontal = {
-            0,
-            (LONG)(height / 2 - 6),
-            (LONG) width,
-            (LONG)(height / 2 + 6)
+            .left = 0,
+            .top = (LONG)(height / 2 - 6),
+            .right = (LONG) width,
+            .bottom = (LONG)(height / 2 + 6)
         };
 
         HBRUSH divider =

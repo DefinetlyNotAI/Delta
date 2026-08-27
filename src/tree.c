@@ -70,17 +70,16 @@ static void enableDpiAwareness(void) {
     )(HANDLE);
 
     const HMODULE user32 =
-        GetModuleHandleW(L"user32.dll");
+            GetModuleHandleW(L"user32.dll");
 
     if (user32 == NULL) {
         return;
     }
 
-    const FARPROC procedure =
-        GetProcAddress(
-            user32,
-            "SetProcessDpiAwarenessContext"
-        );
+    FARPROC procedure = GetProcAddress(
+        user32,
+        "SetProcessDpiAwarenessContext"
+    );
 
     SetProcessDpiAwarenessContextFn setAwareness = NULL;
 
@@ -97,7 +96,7 @@ static void enableDpiAwareness(void) {
          * DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
          */
         setAwareness(
-            (HANDLE)(INT_PTR)-4
+            (HANDLE) (INT_PTR) -4
         );
     } else {
         SetProcessDPIAware();
@@ -153,8 +152,7 @@ static BYTE *loadResourceBytes(
         return NULL;
     }
 
-    BYTE *const copy =
-            (BYTE *) malloc(resourceLength);
+    BYTE *const copy = malloc(resourceLength);
 
     if (copy == NULL) {
         return NULL;
@@ -190,11 +188,7 @@ static BOOL loadTreeImage(void) {
         return FALSE;
     }
 
-    const HGLOBAL memory =
-            GlobalAlloc(
-                GMEM_MOVEABLE,
-                (SIZE_T) length
-            );
+    const HGLOBAL memory = GlobalAlloc(GMEM_MOVEABLE, length);
 
     if (memory == NULL) {
         free(data);
@@ -457,7 +451,7 @@ static void releaseTreeResources(void) {
 
     if (g_treeImage != NULL) {
         GdipDisposeImage(
-            (GpImage *) g_treeImage
+            g_treeImage
         );
 
         g_treeImage = NULL;
@@ -649,11 +643,11 @@ static void drawTreeImage(
 
     if (
         GdipGetImageWidth(
-            (GpImage *) g_treeImage,
+            g_treeImage,
             &imageWidth
         ) != Ok ||
         GdipGetImageHeight(
-            (GpImage *) g_treeImage,
+            g_treeImage,
             &imageHeight
         ) != Ok ||
         imageWidth == 0 ||
@@ -754,7 +748,7 @@ static void drawTreeImage(
 
     GdipDrawImageRectI(
         graphics,
-        (GpImage *) g_treeImage,
+        g_treeImage,
         imageX,
         imageY,
         drawWidth,

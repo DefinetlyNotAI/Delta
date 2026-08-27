@@ -27,8 +27,8 @@ int WINAPI WinMain(
     writeSessionMemory("active");
 
     srand(
-        ((unsigned int) time(NULL)) ^
-        ((unsigned int) GetCurrentProcessId())
+        (unsigned int) time(NULL) ^
+        (unsigned int) GetCurrentProcessId()
     );
 
     if (!createOverlay(

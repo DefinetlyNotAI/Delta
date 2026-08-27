@@ -1,5 +1,3 @@
-#define WIN32_LEAN_AND_MEAN
-#define COBJMACROS
 #define UNICODE
 #define _UNICODE // NOLINT(*-reserved-identifier)
 
@@ -71,31 +69,39 @@ static void BSOD(void) {
 
 static void enableDpiAwareness(void) {
     typedef BOOL (WINAPI
-    *SetProcessDpiAwarenessContextFn
-    )
-    (HANDLE);
+        *SetProcessDpiAwarenessContextFn
+    )(HANDLE);
 
-    const HMODULE user32 = GetModuleHandleW(L"user32.dll");
+    const HMODULE user32 =
+        GetModuleHandleW(L"user32.dll");
 
     if (user32 == NULL) {
         return;
     }
 
-    union {
-        FARPROC procedure;
-        SetProcessDpiAwarenessContextFn setAwareness;
-    } dpiProcedure;
+    const FARPROC procedure =
+        GetProcAddress(
+            user32,
+            "SetProcessDpiAwarenessContext"
+        );
 
-    dpiProcedure.procedure = GetProcAddress(
-        user32,
-        "SetProcessDpiAwarenessContext"
-    );
+    SetProcessDpiAwarenessContextFn setAwareness = NULL;
 
-    if (dpiProcedure.setAwareness != NULL) {
+    if (procedure != NULL) {
+        memcpy(
+            &setAwareness,
+            &procedure,
+            sizeof(setAwareness)
+        );
+    }
+
+    if (setAwareness != NULL) {
         /*
          * DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2
          */
-        dpiProcedure.setAwareness((HANDLE) - 4);
+        setAwareness(
+            (HANDLE)(INT_PTR)-4
+        );
     } else {
         SetProcessDPIAware();
     }
